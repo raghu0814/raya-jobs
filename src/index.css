@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #080808; font-family: 'DM Sans', sans-serif; color: #F0EDE6; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 4px; }
+input::placeholder, textarea::placeholder { color: #444; }
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.4); }
+@keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+@keyframes spin { to { transform: rotate(360deg); } }
