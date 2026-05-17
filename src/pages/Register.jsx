@@ -42,7 +42,7 @@ const Sel=({label,options,value,onChange})=>(
 );
 
 function SkillSelector({skills,setSkills,exclude}){
-  const [input,setInput]=useState("");
+  const[input,setInput]=useState("");
   const add=(s)=>{const v=s.trim();if(v&&!skills.includes(v))setSkills(p=>[...p,v]);};
   const handleKey=(e)=>{if(e.key==="Enter"&&input.trim()){add(input);setInput("");}};
   return(
@@ -82,12 +82,12 @@ function SkillSelector({skills,setSkills,exclude}){
 
 export default function Register(){
   const nav=useNavigate();
-  const [step,setStep]=useState(1);
-  const [loading,setLoading]=useState(false);
-  const [error,setError]=useState("");
-  const [resumeFile,setResumeFile]=useState(null);
-  const [skills,setSkills]=useState([]);
-  const [f,setF]=useState({
+  const[step,setStep]=useState(1);
+  const[loading,setLoading]=useState(false);
+  const[error,setError]=useState("");
+  const[resumeFile,setResumeFile]=useState(null);
+  const[skills,setSkills]=useState([]);
+  const[f,setF]=useState({
     name:"",phone:"",email:"",password:"",pan:"",city:"",
     exp:"",company:"",title:"",cCTC:"",eCTC:"",
     notice:"",pSkill:"",jobType:""
@@ -102,20 +102,40 @@ export default function Register(){
     return !snap.empty;
   };
 
+  // ── STEP 1 VALIDATION ──────────────────────────────────
   const handleNext1=async()=>{
-    if(!f.name||!f.email||!f.password||!f.pan||!f.city){setError("Please fill all required fields");return;}
-    if(f.password.length<6){setError("Password must be at least 6 characters");return;}
-    if(!validatePAN(f.pan)){setError("Invalid PAN format. Example: ABCDE1234F");return;}
+    if(!f.name||!f.email||!f.password||!f.pan||!f.city){
+      setError("Please fill all required fields");return;
+    }
+    if(f.password.length<6){
+      setError("Password must be at least 6 characters");return;
+    }
+    if(!validatePAN(f.pan)){
+      setError("Invalid PAN format. Example: ABCDE1234F");return;
+    }
     setLoading(true);setError("");
     try{
       const exists=await checkPANExists(f.pan);
-      if(exists){setError("An account already exists with this PAN. One account per person only.");setLoading(false);return;}
+      if(exists){
+        setError("An account already exists with this PAN. One account per person only.");
+        setLoading(false);return;
+      }
       setStep(2);
     }catch(e){setError("Verification failed. Try again.");}
     finally{setLoading(false);}
   };
 
+  // ── STEP 2 VALIDATION ──────────────────────────────────
+  const handleNext2=()=>{
+    if(!f.exp){setError("Please enter your total experience");return;}
+    if(!f.title){setError("Please enter your current job title");return;}
+    setError("");
+    setStep(3);
+  };
+
+  // ── STEP 3 SUBMIT ──────────────────────────────────────
   const handleSubmit=async()=>{
+    if(!f.pSkill){setError("Please select your primary skill");return;}
     setLoading(true);setError("");
     try{
       const cred=await createUserWithEmailAndPassword(auth,f.email,f.password);
@@ -139,23 +159,36 @@ export default function Register(){
       });
       nav("/dashboard");
     }catch(e){
-      setError(e.message.includes("email-already-in-use")?"Email already registered. Please login.":"Registration failed. Try again.");
+      setError(e.message.includes("email-already-in-use")
+        ?"Email already registered. Please login."
+        :"Registration failed. Try again.");
     }finally{setLoading(false);}
   };
 
   const Prog=()=>(
     <div style={{display:"flex",gap:6,marginBottom:24}}>
-      {[1,2,3].map(i=><div key={i} style={{flex:1,height:3,borderRadius:2,background:i<=step?`linear-gradient(90deg,${G},${GL})`:S3}}/>)}
+      {[1,2,3].map(i=>(
+        <div key={i} style={{flex:1,height:3,borderRadius:2,background:i<=step?`linear-gradient(90deg,${G},${GL})`:S3}}/>
+      ))}
     </div>
   );
 
   return(
     <div style={{background:BG,minHeight:"100vh",color:WT,fontFamily:"'DM Sans',sans-serif",paddingBottom:40}}>
-      <NavBar onBack={step>1?()=>{setStep(s=>s-1);setError("");}:()=>nav("/")} right={<span style={{color:MT,fontSize:12}}>Step {step}/3</span>}/>
+      <NavBar
+        onBack={step>1?()=>{setStep(s=>s-1);setError("");}:()=>nav("/")}
+        right={<span style={{color:MT,fontSize:12}}>Step {step}/3</span>}
+      />
       <div style={{maxWidth:480,margin:"32px auto",padding:"0 20px"}}>
         <Prog/>
         <div style={{background:S1,border:`1px solid ${BR}`,borderRadius:16,padding:28}}>
-          {error&&<div style={{background:"#1A0A0A",border:"1px solid #EF444444",borderRadius:8,padding:"10px 14px",color:"#EF4444",fontSize:13,marginBottom:16,lineHeight:1.5}}>{error}</div>}
+
+          {/* ERROR BOX */}
+          {error&&(
+            <div style={{background:"#1A0A0A",border:"1px solid #EF444444",borderRadius:8,padding:"10px 14px",color:"#EF4444",fontSize:13,marginBottom:16,lineHeight:1.5}}>
+              {error}
+            </div>
+          )}
 
           {/* ── STEP 1 — Account Details ── */}
           {step===1&&<>
@@ -168,16 +201,22 @@ export default function Register(){
               <Inp label="Password *" placeholder="Min 6 characters" type="password" value={f.password} onChange={e=>set("password",e.target.value)}/>
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 <label style={{fontSize:10,fontWeight:700,color:G,letterSpacing:"2px",textTransform:"uppercase"}}>PAN Number *</label>
-                <input placeholder="ABCDE1234F" value={f.pan}
+                <input
+                  placeholder="ABCDE1234F"
+                  value={f.pan}
                   onChange={e=>set("pan",e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""))}
                   maxLength={10}
                   style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"12px 14px",color:WT,fontSize:14,outline:"none",fontFamily:"inherit",letterSpacing:"3px"}}
-                  onFocus={e=>e.target.style.borderColor=G} onBlur={e=>e.target.style.borderColor=BR}/>
+                  onFocus={e=>e.target.style.borderColor=G}
+                  onBlur={e=>e.target.style.borderColor=BR}
+                />
                 <span style={{fontSize:11,color:MT}}>🔒 Ensures one account per person. Format: ABCDE1234F</span>
               </div>
               <Sel label="City *" options={["Hyderabad","Bangalore","Pune","Mumbai","Chennai","Delhi","Noida","Other"]} value={f.city} onChange={e=>set("city",e.target.value)}/>
             </div>
-            <button onClick={handleNext1} disabled={loading}
+            <button
+              onClick={handleNext1}
+              disabled={loading}
               style={{marginTop:20,width:"100%",background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"13px",borderRadius:8,fontSize:14,fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"inherit",opacity:loading?0.7:1}}>
               {loading?"Verifying...":"Continue →"}
             </button>
@@ -200,7 +239,8 @@ export default function Register(){
               <Sel label="Notice Period" options={["Immediate","15 Days","30 Days","60 Days","90 Days"]} value={f.notice} onChange={e=>set("notice",e.target.value)}/>
               <Sel label="Preferred Job Type" options={["Full Time","Remote","Hybrid","Contract"]} value={f.jobType} onChange={e=>set("jobType",e.target.value)}/>
             </div>
-            <button onClick={()=>setStep(3)}
+            <button
+              onClick={handleNext2}
               style={{marginTop:20,width:"100%",background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"13px",borderRadius:8,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
               Continue →
             </button>
@@ -218,7 +258,9 @@ export default function Register(){
                 <label style={{border:`2px dashed ${resumeFile?G:BR}`,borderRadius:10,padding:20,textAlign:"center",cursor:"pointer",background:resumeFile?`${G}08`:"transparent"}}>
                   <input type="file" accept=".pdf" onChange={e=>setResumeFile(e.target.files[0])} style={{display:"none"}}/>
                   <div style={{fontSize:28,marginBottom:6}}>{resumeFile?"✅":"📄"}</div>
-                  <div style={{color:resumeFile?G:WT,fontSize:14,fontWeight:600,marginBottom:4}}>{resumeFile?resumeFile.name:"Click to upload Resume"}</div>
+                  <div style={{color:resumeFile?G:WT,fontSize:14,fontWeight:600,marginBottom:4}}>
+                    {resumeFile?resumeFile.name:"Click to upload Resume"}
+                  </div>
                   <div style={{color:MT,fontSize:12}}>PDF only • Max 5MB</div>
                 </label>
               </div>
@@ -226,11 +268,14 @@ export default function Register(){
                 ✦ First 2 applications & 1 referral post free. Upgrade to ₹799 for unlimited everything.
               </div>
             </div>
-            <button onClick={handleSubmit} disabled={loading}
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
               style={{marginTop:20,width:"100%",background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"13px",borderRadius:8,fontSize:14,fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"inherit",opacity:loading?0.7:1}}>
               {loading?"Creating Account...":"Create My Account ✦"}
             </button>
           </>}
+
         </div>
       </div>
     </div>
