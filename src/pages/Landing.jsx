@@ -1,142 +1,384 @@
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase/config";
+import { useState, useEffect } from "react";
 
-const G="#C9A84C",GL="#E8C96A",BG="#080808",S1="#0F0F0F",BR="#2A2A2A",MT="#666666",WT="#F0EDE6";
-const companies=["TCS","Infosys","Wipro","Accenture","Amazon","Microsoft","Cognizant","HCL","Swiggy","Zomato","PhonePe","Flipkart"];
-const steps=[
-  {n:"01",icon:"📝",t:"Post a Referral",d:"Post your company's open role. Get serious applicants who paid ₹799 to apply."},
-  {n:"02",icon:"🎯",t:"Apply to Referrals",d:"Find employees at your dream company willing to refer you. Apply directly."},
-  {n:"03",icon:"🚀",t:"Internal Referral",d:"Employee submits your profile through their company's referral system."},
-  {n:"04",icon:"💰",t:"Everyone Wins",d:"You get hired. Referrer earns ₹25k–₹1L bonus from their company."},
-];
+const PRIMARY="#1A2E4A",GREEN="#22C55E",GL="#4ADE80",GREENBG="#F0FDF4";
+const BG="#FFFFFF",BG2="#F8FAFC",BORDER="#E2E8F0",TEXT="#0F172A",MUTED="#64748B";
 
-export default function Landing() {
-  const nav = useNavigate();
-  const user = auth.currentUser;
+// ── SVG ILLUSTRATIONS ─────────────────────────────────────
+const IlluPost=()=>(
+  <svg viewBox="0 0 180 140" fill="none" style={{width:"100%",maxWidth:160}}>
+    <rect x="10" y="10" width="160" height="120" rx="16" fill="#EFF6FF" stroke="#BFDBFE" strokeWidth="1.5"/>
+    <rect x="26" y="30" width="80" height="7" rx="3.5" fill="#93C5FD"/>
+    <rect x="26" y="44" width="60" height="5" rx="2.5" fill="#BFDBFE"/>
+    <rect x="26" y="56" width="110" height="5" rx="2.5" fill="#BFDBFE"/>
+    <rect x="26" y="68" width="80" height="5" rx="2.5" fill="#BFDBFE"/>
+    <rect x="26" y="88" width="56" height="24" rx="8" fill={GREEN}/>
+    <rect x="34" y="97" width="40" height="5" rx="2.5" fill="white"/>
+    <rect x="110" y="20" width="48" height="26" rx="8" fill="white" stroke={BORDER} strokeWidth="1"/>
+    <circle cx="120" cy="33" r="5" fill="#FEF9C3"/>
+    <rect x="129" y="29" width="22" height="4" rx="2" fill="#FCD34D"/>
+    <rect x="129" y="36" width="16" height="3" rx="1.5" fill="#FDE68A"/>
+  </svg>
+);
 
-  return (
-    <div style={{background:BG,minHeight:"100vh",color:WT,overflowX:"hidden"}}>
-      {/* NAV */}
-      <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(8,8,8,0.95)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BR}`,padding:"0 20px",height:60,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <span style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:700,fontSize:20,background:`linear-gradient(135deg,${G},${GL})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>RaYa Jobs</span>
-        <div style={{display:"flex",gap:8}}>
-          {user ? (
-            <button onClick={()=>nav("/dashboard")} style={{background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"7px 18px",borderRadius:7,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Dashboard →</button>
-          ) : (
+const IlluRefer=()=>(
+  <svg viewBox="0 0 180 140" fill="none" style={{width:"100%",maxWidth:160}}>
+    <circle cx="44" cy="56" r="26" fill="#E0F2FE" stroke="#BAE6FD" strokeWidth="1.5"/>
+    <circle cx="44" cy="48" r="11" fill="#7DD3FC"/>
+    <path d="M22 72 Q44 62 66 72" fill="#7DD3FC"/>
+    <path d="M74 60 L106 60" stroke={GREEN} strokeWidth="2.5" strokeDasharray="4 3"/>
+    <path d="M102 55 L108 60 L102 65" stroke={GREEN} strokeWidth="2.5" strokeLinecap="round"/>
+    <circle cx="136" cy="56" r="26" fill="#DCFCE7" stroke="#BBF7D0" strokeWidth="1.5"/>
+    <circle cx="136" cy="48" r="11" fill={GREEN}/>
+    <path d="M114 72 Q136 62 158 72" fill={GREEN}/>
+    <rect x="96" y="90" width="56" height="28" rx="8" fill="white" stroke={BORDER} strokeWidth="1"/>
+    <circle cx="110" cy="104" r="5" fill="#DCFCE7"/>
+    <text x="108" y="108" fontSize="7" fill={GREEN} textAnchor="middle">✓</text>
+    <rect x="120" y="100" width="24" height="4" rx="2" fill="#86EFAC"/>
+    <rect x="120" y="107" width="18" height="3" rx="1.5" fill="#BBF7D0"/>
+  </svg>
+);
+
+const IlluHire=()=>(
+  <svg viewBox="0 0 180 140" fill="none" style={{width:"100%",maxWidth:160}}>
+    <rect x="20" y="20" width="140" height="100" rx="16" fill="#F0FDF4" stroke="#BBF7D0" strokeWidth="1.5"/>
+    <path d="M76 48 L104 48 L101 66 Q90 76 79 66 Z" fill="#FCD34D" stroke="#FDE68A" strokeWidth="1"/>
+    <rect x="87" y="66" width="6" height="10" fill="#FCD34D"/>
+    <rect x="80" y="76" width="20" height="5" rx="2.5" fill="#F59E0B"/>
+    <text x="50" y="60" fontSize="12">⭐</text>
+    <text x="118" y="60" fontSize="12">⭐</text>
+    <text x="84" y="40" fontSize="11">🎉</text>
+    <rect x="40" y="96" width="100" height="5" rx="2.5" fill="#86EFAC"/>
+    <rect x="60" y="106" width="60" height="4" rx="2" fill="#BBF7D0"/>
+  </svg>
+);
+
+const IlluReward=()=>(
+  <svg viewBox="0 0 180 140" fill="none" style={{width:"100%",maxWidth:160}}>
+    <rect x="14" y="28" width="140" height="84" rx="14" fill={PRIMARY}/>
+    <rect x="14" y="28" width="140" height="38" rx="14" fill="#1E3A5F"/>
+    <rect x="14" y="48" width="140" height="18" fill="#1E3A5F"/>
+    <rect x="28" y="38" width="26" height="18" rx="4" fill="#FCD34D" opacity="0.9"/>
+    <rect x="33" y="43" width="16" height="8" rx="2" fill="#F59E0B"/>
+    <text x="36" y="90" fontSize="10" fill="white" fontWeight="bold">₹75,000</text>
+    <text x="36" y="102" fontSize="7" fill="#94A3B8">Referral Bonus</text>
+    <rect x="110" y="18" width="52" height="26" rx="8" fill="#DCFCE7" stroke="#86EFAC" strokeWidth="1"/>
+    <text x="116" y="30" fontSize="9">💰</text>
+    <rect x="130" y="26" width="24" height="4" rx="2" fill="#86EFAC"/>
+    <rect x="130" y="33" width="18" height="3" rx="1.5" fill="#BBF7D0"/>
+  </svg>
+);
+
+const HeroIllus=()=>(
+  <svg viewBox="0 0 440 360" fill="none" style={{width:"100%",maxWidth:440}}>
+    <ellipse cx="260" cy="190" rx="150" ry="130" fill="#F0FDF4" opacity="0.8"/>
+    <ellipse cx="160" cy="270" rx="90" ry="70" fill="#DCFCE7" opacity="0.5"/>
+    {/* Main card */}
+    <rect x="30" y="50" width="210" height="155" rx="18" fill="white" stroke={BORDER} strokeWidth="1.5"/>
+    <rect x="30" y="50" width="210" height="46" rx="18" fill="#EFF6FF"/>
+    <rect x="30" y="78" width="210" height="18" fill="#EFF6FF"/>
+    <circle cx="56" cy="74" r="14" fill="#BFDBFE"/>
+    <rect x="78" y="67" width="72" height="5" rx="2.5" fill="#93C5FD"/>
+    <rect x="78" y="75" width="54" height="4" rx="2" fill="#BFDBFE"/>
+    <rect x="50" y="112" width="110" height="4" rx="2" fill="#E2E8F0"/>
+    <rect x="50" y="122" width="90" height="4" rx="2" fill="#E2E8F0"/>
+    <rect x="50" y="132" width="130" height="4" rx="2" fill="#E2E8F0"/>
+    <rect x="50" y="156" width="72" height="26" rx="8" fill={GREEN}/>
+    <rect x="58" y="165" width="56" height="5" rx="2.5" fill="white" opacity="0.9"/>
+    <rect x="134" y="156" width="72" height="26" rx="8" fill="#F1F5F9" stroke={BORDER} strokeWidth="1"/>
+    <rect x="142" y="165" width="56" height="5" rx="2.5" fill="#94A3B8"/>
+    {/* Referred card */}
+    <rect x="222" y="32" width="168" height="74" rx="14" fill="white" stroke={BORDER} strokeWidth="1.5"/>
+    <circle cx="246" cy="70" r="18" fill="#DCFCE7" stroke="#86EFAC" strokeWidth="1"/>
+    <text x="239" y="75" fontSize="12">✓</text>
+    <rect x="272" y="58" width="90" height="5" rx="2.5" fill={PRIMARY}/>
+    <rect x="272" y="68" width="66" height="4" rx="2" fill={MUTED} opacity="0.4"/>
+    <rect x="272" y="80" width="46" height="14" rx="6" fill={GREENBG}/>
+    <rect x="278" y="84" width="34" height="4" rx="2" fill={GREEN}/>
+    {/* Hired card */}
+    <rect x="248" y="190" width="168" height="74" rx="14" fill={PRIMARY}/>
+    <text x="268" y="228" fontSize="24">🎉</text>
+    <rect x="302" y="212" width="84" height="5" rx="2.5" fill="white" opacity="0.9"/>
+    <rect x="302" y="222" width="66" height="4" rx="2" fill="white" opacity="0.5"/>
+    <rect x="302" y="234" width="56" height="16" rx="6" fill={GREEN}/>
+    <rect x="308" y="239" width="44" height="4" rx="2" fill={PRIMARY}/>
+    {/* Bonus card */}
+    <rect x="30" y="248" width="150" height="64" rx="14" fill="white" stroke={BORDER} strokeWidth="1.5"/>
+    <circle cx="56" cy="280" r="18" fill="#FEF9C3" stroke="#FDE68A" strokeWidth="1"/>
+    <text x="49" y="285" fontSize="14">💰</text>
+    <rect x="82" y="270" width="72" height="5" rx="2.5" fill={PRIMARY}/>
+    <rect x="82" y="280" width="54" height="4" rx="2" fill={MUTED} opacity="0.4"/>
+    <rect x="82" y="290" width="80" height="4" rx="2" fill="#FDE68A"/>
+    {/* Dots */}
+    <circle cx="140" cy="214" r="3.5" fill={GREEN} opacity="0.6"/>
+    <circle cx="150" cy="224" r="2.5" fill={GREEN} opacity="0.4"/>
+    <circle cx="160" cy="234" r="1.5" fill={GREEN} opacity="0.3"/>
+  </svg>
+);
+
+// ── SHARED COMPONENTS ─────────────────────────────────────
+const Pill=({children})=>(
+  <div style={{display:"inline-flex",alignItems:"center",gap:6,background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"5px 12px",fontSize:12,color:"#15803D",fontWeight:600}}>
+    <span style={{color:GREEN,fontSize:10}}>✓</span>{children}
+  </div>
+);
+
+const FeatureCheck=({text,color="#22C55E",bg="#F0FDF4"})=>(
+  <div style={{display:"flex",gap:10,alignItems:"center",fontSize:14,color:TEXT}}>
+    <div style={{width:20,height:20,borderRadius:"50%",background:bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color,fontWeight:700,flexShrink:0}}>✓</div>
+    {text}
+  </div>
+);
+
+const StepCard=({num,title,desc,Illus,color})=>(
+  <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:20,padding:26,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}
+    onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(15,23,42,0.08)";}}
+    onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="";}}>
+    <div style={{width:44,height:44,borderRadius:"50%",background:color+"15",border:`2px solid ${color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,color,marginBottom:14}}>{num}</div>
+    <div style={{marginBottom:14,height:110,display:"flex",alignItems:"center"}}><Illus/></div>
+    <div style={{fontWeight:700,fontSize:15,color:PRIMARY,marginBottom:6}}>{title}</div>
+    <div style={{color:MUTED,fontSize:13,lineHeight:1.7}}>{desc}</div>
+  </div>
+);
+
+const Testimonial=({quote,name,role,company,emoji})=>(
+  <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:20,padding:24}}>
+    <div style={{fontSize:30,marginBottom:10}}>{emoji}</div>
+    <p style={{color:TEXT,fontSize:13,lineHeight:1.8,marginBottom:14,fontStyle:"italic"}}>"{quote}"</p>
+    <div style={{borderTop:`1px solid ${BORDER}`,paddingTop:12}}>
+      <div style={{fontWeight:700,color:PRIMARY,fontSize:13}}>{name}</div>
+      <div style={{color:MUTED,fontSize:11,marginTop:2}}>{role} • {company}</div>
+    </div>
+  </div>
+);
+
+// ── MAIN ─────────────────────────────────────────────────
+export default function Landing(){
+  const nav=useNavigate();
+  const user=auth.currentUser;
+  const[scrolled,setScrolled]=useState(false);
+  useEffect(()=>{const h=()=>setScrolled(window.scrollY>20);window.addEventListener("scroll",h);return()=>window.removeEventListener("scroll",h);},[]);
+
+  const companies=["TCS","Infosys","Wipro","Accenture","Amazon","Microsoft","Cognizant","HCL","Swiggy","Zomato","PhonePe","Flipkart","Razorpay","CRED","Meesho"];
+
+  return(
+    <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",background:BG,color:TEXT,overflowX:"hidden"}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        ::-webkit-scrollbar{width:4px;}
+        ::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:4px;}
+        @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        @keyframes fadeup{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .hero-img{animation:float 5s ease-in-out infinite;}
+        .fadein{animation:fadeup 0.6s ease forwards;}
+        .fadein2{animation:fadeup 0.6s 0.15s ease both;}
+        .cta-btn{transition:all 0.2s;}
+        .cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(34,197,94,0.3);}
+        .step-card{transition:transform 0.2s,box-shadow 0.2s;}
+        .nav-link{transition:color 0.15s;}
+        .nav-link:hover{color:${PRIMARY}!important;}
+      `}</style>
+
+      {/* ── NAV ── */}
+      <nav style={{position:"sticky",top:0,zIndex:100,background:scrolled?"rgba(255,255,255,0.97)":"white",backdropFilter:"blur(16px)",borderBottom:scrolled?`1px solid ${BORDER}`:"1px solid transparent",padding:`0 clamp(16px,4vw,48px)`,height:66,display:"flex",alignItems:"center",justifyContent:"space-between",transition:"all 0.3s"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>nav("/")}>
+          <div style={{width:34,height:34,borderRadius:10,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🤝</div>
+          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:19,color:PRIMARY}}>HireBridge</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:24}}>
+          <span className="nav-link" onClick={()=>nav("/browse")} style={{color:MUTED,fontSize:13,fontWeight:500,cursor:"pointer"}}>Browse Jobs</span>
+          <span className="nav-link" style={{color:MUTED,fontSize:13,fontWeight:500,cursor:"pointer"}}>How it Works</span>
+          <span className="nav-link" style={{color:MUTED,fontSize:13,fontWeight:500,cursor:"pointer"}}>Pricing</span>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          {user?(
+            <button className="cta-btn" onClick={()=>nav("/dashboard")} style={{background:GREEN,border:"none",color:"white",padding:"9px 20px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Dashboard →</button>
+          ):(
             <>
-              <button onClick={()=>nav("/login")} style={{background:"none",border:`1px solid ${BR}`,color:MT,padding:"7px 18px",borderRadius:7,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Login</button>
-              <button onClick={()=>nav("/register")} style={{background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"7px 18px",borderRadius:7,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Join Free</button>
+              <button onClick={()=>nav("/login")} style={{background:"none",border:`1.5px solid ${BORDER}`,color:PRIMARY,padding:"8px 18px",borderRadius:9,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Login</button>
+              <button className="cta-btn" onClick={()=>nav("/register")} style={{background:GREEN,border:"none",color:"white",padding:"9px 20px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started Free</button>
             </>
           )}
         </div>
       </nav>
 
-      {/* HERO */}
-      <div style={{padding:"80px 20px 64px",textAlign:"center",background:`radial-gradient(ellipse 100% 60% at 50% 0%,${G}0C,transparent 65%)`}}>
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,background:`${G}11`,border:`1px solid ${G}33`,borderRadius:100,padding:"5px 14px",marginBottom:20,fontSize:11,color:G,fontWeight:600,letterSpacing:"1px"}}>
-          <span style={{width:6,height:6,borderRadius:"50%",background:"#4ADE80",display:"inline-block"}}/>
-          ONE ACCOUNT — FIND JOBS & POST REFERRALS
+      {/* ── HERO ── */}
+      <section style={{padding:"clamp(48px,7vw,96px) clamp(16px,4vw,48px)",maxWidth:1200,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:48,alignItems:"center"}}>
+        <div className="fadein">
+          <div style={{display:"inline-flex",alignItems:"center",gap:8,background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"6px 14px",marginBottom:22,fontSize:11,color:"#15803D",fontWeight:700,letterSpacing:"0.5px"}}>
+            <span style={{width:7,height:7,borderRadius:"50%",background:GREEN,display:"inline-block"}}/>
+            INDIA'S PROFESSIONAL REFERRAL PLATFORM
+          </div>
+          <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(34px,6vw,58px)",fontWeight:800,lineHeight:1.15,marginBottom:18,color:PRIMARY}}>
+            Refer Talent.<br/><span style={{color:GREEN}}>Get Rewarded.</span>
+          </h1>
+          <p style={{color:MUTED,fontSize:"clamp(14px,2vw,17px)",lineHeight:1.8,marginBottom:28,maxWidth:480}}>
+            Connect job seekers with employees who can refer them inside top IT companies. One platform — find jobs, post referrals, earn bonuses.
+          </p>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:32}}>
+            <Pill>5x higher hire rate</Pill>
+            <Pill>7-day response guarantee</Pill>
+            <Pill>Earn ₹25k–₹1L bonus</Pill>
+          </div>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+            <button className="cta-btn" onClick={()=>nav("/register")} style={{background:GREEN,border:"none",color:"white",padding:"13px 30px",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started Free →</button>
+            <button onClick={()=>nav("/browse")} style={{background:"none",border:`2px solid ${BORDER}`,color:PRIMARY,padding:"13px 26px",borderRadius:12,fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals</button>
+          </div>
+          <p style={{color:MUTED,fontSize:12,marginTop:12}}>First 2 applications & 1 post free. No credit card needed.</p>
         </div>
+        <div className="fadein2 hero-img" style={{display:"flex",justifyContent:"center"}}><HeroIllus/></div>
+      </section>
 
-        <h1 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"clamp(40px,8vw,68px)",fontWeight:700,lineHeight:1.1,marginBottom:16}}>
-          Get Referred.<br/><span style={{color:G}}>Get Hired.</span><br/>
-          <span style={{fontSize:"clamp(28px,5vw,44px)",color:"#AAA"}}>Help Others Too.</span>
-        </h1>
-
-        <p style={{color:MT,fontSize:16,maxWidth:520,margin:"0 auto 16px",lineHeight:1.7}}>
-          One platform. Post referrals from your company. Apply to referrals at others. Whether you're hiring or job hunting — RaYa works both ways.
-        </p>
-
-        <div style={{display:"inline-flex",alignItems:"center",gap:8,background:`${G}15`,border:`1px solid ${G}44`,borderRadius:100,padding:"8px 20px",marginBottom:36,fontSize:14,color:G,fontWeight:700}}>
-          ✦ Everything unlocked at ₹799 / 3 months
-        </div>
-
-        <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
-          <button onClick={()=>nav("/register")} style={{background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"14px 32px",borderRadius:8,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Join RaYa — ₹799 →</button>
-          <button onClick={()=>nav("/browse")} style={{background:"transparent",border:`1.5px solid ${G}`,color:G,padding:"14px 32px",borderRadius:8,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals</button>
-        </div>
-
-        {/* STATS */}
-        <div style={{display:"flex",justifyContent:"center",gap:"clamp(16px,4vw,40px)",marginTop:48,background:S1,border:`1px solid ${BR}`,borderRadius:14,padding:"20px clamp(16px,4vw,40px)",maxWidth:520,margin:"48px auto 0"}}>
-          {[["12k+","Referrals"],["48k+","Members"],["3.2k+","Hired"],["₹47Cr","Bonuses"]].map(([v,l])=>(
-            <div key={l} style={{textAlign:"center"}}>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"clamp(20px,4vw,26px)",fontWeight:700,color:G,lineHeight:1}}>{v}</div>
-              <div style={{color:MT,fontSize:11,marginTop:3}}>{l}</div>
+      {/* ── STATS ── */}
+      <section style={{background:BG2,borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`}}>
+        <div style={{maxWidth:960,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))"}}>
+          {[["12,000+","Referral Posts","📝"],["48,000+","Job Seekers","👥"],["3,200+","Hired","🏆"],["₹47Cr+","Bonuses Earned","💰"]].map(([v,l,icon],i,arr)=>(
+            <div key={l} style={{textAlign:"center",padding:"20px 12px",borderRight:i<arr.length-1?`1px solid ${BORDER}`:"none"}}>
+              <div style={{fontSize:26,marginBottom:4}}>{icon}</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(22px,4vw,32px)",fontWeight:700,color:PRIMARY,lineHeight:1}}>{v}</div>
+              <div style={{color:MUTED,fontSize:12,marginTop:4}}>{l}</div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* TICKER */}
-      <div style={{borderTop:`1px solid ${BR}`,borderBottom:`1px solid ${BR}`,padding:"12px 0",overflow:"hidden",background:S1}}>
-        <div style={{display:"flex",animation:"ticker 22s linear infinite",width:"max-content"}}>
-          {[...companies,...companies].map((c,i)=><span key={i} style={{padding:"5px 16px",margin:"0 4px",border:`1px solid ${BR}`,borderRadius:6,color:MT,fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>{c}</span>)}
-        </div>
-      </div>
-
-      {/* HOW IT WORKS */}
-      <div style={{padding:"72px 20px",maxWidth:960,margin:"0 auto"}}>
-        <div style={{textAlign:"center",marginBottom:40}}>
-          <div style={{color:G,fontSize:10,letterSpacing:"3px",fontWeight:700,marginBottom:10}}>THE PROCESS</div>
-          <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"clamp(28px,5vw,40px)",fontWeight:700}}>How RaYa Works</h2>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:14}}>
-          {steps.map((s,i)=>(
-            <div key={i} style={{background:S1,border:`1px solid ${BR}`,borderRadius:12,padding:22}}>
-              <div style={{fontSize:28,marginBottom:10}}>{s.icon}</div>
-              <div style={{color:G,fontSize:10,fontWeight:700,letterSpacing:"2px",marginBottom:6}}>{s.n}</div>
-              <div style={{color:WT,fontWeight:700,fontSize:15,marginBottom:8,lineHeight:1.3}}>{s.t}</div>
-              <div style={{color:MT,fontSize:13,lineHeight:1.6}}>{s.d}</div>
-            </div>
+      {/* ── TICKER ── */}
+      <section style={{padding:"18px 0",overflow:"hidden",background:"white",borderBottom:`1px solid ${BORDER}`}}>
+        <p style={{textAlign:"center",fontSize:11,color:MUTED,fontWeight:600,letterSpacing:"1px",marginBottom:12}}>EMPLOYEES FROM THESE COMPANIES ARE ALREADY ON HIREBRIDGE</p>
+        <div style={{display:"flex",animation:"ticker 28s linear infinite",width:"max-content"}}>
+          {[...companies,...companies].map((c,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",padding:"7px 18px",margin:"0 4px",background:BG2,border:`1px solid ${BORDER}`,borderRadius:100,fontSize:12,fontWeight:600,color:PRIMARY,whiteSpace:"nowrap"}}>{c}</div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* DUAL VALUE CARDS */}
-      <div style={{padding:"0 20px 80px",maxWidth:960,margin:"0 auto"}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16}}>
-          {/* Looking for job */}
-          <div style={{background:`linear-gradient(145deg,${G}14,${S1})`,border:`1px solid ${G}33`,borderRadius:16,padding:32}}>
-            <div style={{fontSize:36,marginBottom:14}}>🎯</div>
-            <h3 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,marginBottom:10}}>Looking for a Job?</h3>
-            <p style={{color:MT,fontSize:14,lineHeight:1.7,marginBottom:20}}>Apply directly to employees who can refer you inside top IT companies. 5x higher chance of getting hired vs direct application.</p>
-            {["Browse referrals by company & role","Apply directly to employee insider","Get response within 7 days guaranteed","Track every application live"].map(f=>(
-              <div key={f} style={{display:"flex",gap:8,marginBottom:8,fontSize:13,color:"#CCC"}}><span style={{color:G,flexShrink:0}}>✦</span>{f}</div>
-            ))}
+      {/* ── HOW IT WORKS ── */}
+      <section style={{padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)",maxWidth:1200,margin:"0 auto"}}>
+        <div style={{textAlign:"center",marginBottom:52}}>
+          <div style={{display:"inline-block",background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"5px 14px",fontSize:11,color:"#15803D",fontWeight:700,letterSpacing:"1px",marginBottom:14}}>THE PROCESS</div>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(26px,5vw,42px)",fontWeight:800,color:PRIMARY,marginBottom:12}}>How HireBridge Works</h2>
+          <p style={{color:MUTED,fontSize:15,maxWidth:480,margin:"0 auto",lineHeight:1.7}}>Four simple steps from posting a referral to earning your bonus</p>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16}}>
+          <StepCard num="1" title="Post a Referral" desc="IT employees post their company's open roles with referral details." Illus={IlluPost} color={GREEN}/>
+          <StepCard num="2" title="Apply Directly" desc="Job seekers find employees willing to refer them. Apply with your profile." Illus={IlluRefer} color="#3B82F6"/>
+          <StepCard num="3" title="Get Hired" desc="Employee submits your profile internally. Referrals get 5x more interviews." Illus={IlluHire} color="#F97316"/>
+          <StepCard num="4" title="Earn Bonus" desc="Candidate joins. Employee earns ₹25,000–₹1,00,000 referral bonus." Illus={IlluReward} color="#A855F7"/>
+        </div>
+      </section>
+
+      {/* ── DUAL VALUE ── */}
+      <section style={{background:BG2,padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)"}}>
+        <div style={{maxWidth:1100,margin:"0 auto"}}>
+          <div style={{textAlign:"center",marginBottom:48}}>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(24px,5vw,40px)",fontWeight:800,color:PRIMARY,marginBottom:10}}>Built for Everyone in IT</h2>
+            <p style={{color:MUTED,fontSize:15,maxWidth:440,margin:"0 auto"}}>Whether you're job hunting or want to earn a referral bonus — HireBridge works both ways</p>
           </div>
-
-          {/* Working & want to refer */}
-          <div style={{background:S1,border:`1px solid ${BR}`,borderRadius:16,padding:32}}>
-            <div style={{fontSize:36,marginBottom:14}}>💼</div>
-            <h3 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,marginBottom:10}}>Working in IT?</h3>
-            <p style={{color:MT,fontSize:14,lineHeight:1.7,marginBottom:20}}>Post your company's referral openings. Earn ₹25,000–₹1,00,000 referral bonus when your candidate joins.</p>
-            {["Post referral openings in 2 minutes","Receive only serious paid applicants","Review profiles and refer the best","Earn your full company referral bonus"].map(f=>(
-              <div key={f} style={{display:"flex",gap:8,marginBottom:8,fontSize:13,color:"#CCC"}}><span style={{color:G,flexShrink:0}}>✦</span>{f}</div>
-            ))}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:20}}>
+            {/* Job Seeker card */}
+            <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:22,padding:32,borderTop:`4px solid ${GREEN}`}}>
+              <div style={{width:52,height:52,borderRadius:14,background:GREENBG,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:18}}>🎯</div>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY,marginBottom:8}}>Looking for a Job?</h3>
+              <p style={{color:MUTED,fontSize:14,lineHeight:1.8,marginBottom:22}}>Get referred by real employees at top IT companies. Referred candidates are <strong style={{color:PRIMARY}}>5x more likely</strong> to get hired.</p>
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:26}}>
+                {["Browse referrals by company & role","Apply directly to employee insider","7-day response guaranteed","Track every application live"].map(f=><FeatureCheck key={f} text={f}/>)}
+              </div>
+              <button className="cta-btn" onClick={()=>nav("/register")} style={{width:"100%",background:GREEN,border:"none",color:"white",padding:"13px",borderRadius:11,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Find Referrals →</button>
+            </div>
+            {/* Employee card */}
+            <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:22,padding:32,borderTop:`4px solid ${PRIMARY}`}}>
+              <div style={{width:52,height:52,borderRadius:14,background:"#EFF6FF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:18}}>💼</div>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY,marginBottom:8}}>Working in IT?</h3>
+              <p style={{color:MUTED,fontSize:14,lineHeight:1.8,marginBottom:22}}>Post your company's open referral slots. Receive only <strong style={{color:PRIMARY}}>serious, vetted candidates</strong> and earn your full bonus.</p>
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:26}}>
+                {["Post referral openings in 2 minutes","Only paid serious applicants","Smart routing to best candidate","Earn ₹25,000–₹1,00,000 bonus"].map(f=><FeatureCheck key={f} text={f} color="#3B82F6" bg="#EFF6FF"/>)}
+              </div>
+              <button className="cta-btn" onClick={()=>nav("/register")} style={{width:"100%",background:PRIMARY,border:"none",color:"white",padding:"13px",borderRadius:11,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Post a Referral →</button>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* PRICING */}
-        <div style={{marginTop:24,background:`linear-gradient(145deg,${G}18,${S1})`,border:`1px solid ${G}44`,borderRadius:16,padding:32,textAlign:"center"}}>
-          <div style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"3px",marginBottom:12}}>ONE SIMPLE PLAN</div>
-          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:56,fontWeight:700,color:G,lineHeight:1,marginBottom:4}}>₹799</div>
-          <div style={{color:MT,fontSize:14,marginBottom:24}}>per 3 months • Everything included</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10,marginBottom:28,maxWidth:600,margin:"0 auto 28px"}}>
-            {["Unlimited job applications","Unlimited referral posts","Application tracking","7-day response guarantee","Direct employee contact","Resume upload & storage"].map(f=>(
-              <div key={f} style={{display:"flex",gap:8,fontSize:13,color:"#CCC",alignItems:"center"}}><span style={{color:G}}>✓</span>{f}</div>
-            ))}
-          </div>
-          <button onClick={()=>nav("/register")} style={{background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"14px 40px",borderRadius:8,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started — ₹799 →</button>
-          <div style={{color:MT,fontSize:12,marginTop:12}}>First 2 applications & 1 referral post are free. No credit card to start.</div>
+      {/* ── TESTIMONIALS ── */}
+      <section style={{padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)",maxWidth:1100,margin:"0 auto"}}>
+        <div style={{textAlign:"center",marginBottom:44}}>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(24px,5vw,38px)",fontWeight:800,color:PRIMARY,marginBottom:10}}>What Our Users Say</h2>
+          <p style={{color:MUTED,fontSize:14}}>Real results from real IT professionals</p>
         </div>
-      </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18}}>
+          <Testimonial emoji="🎉" quote="Got referred to Amazon through HireBridge. Employee responded in 3 days, interview scheduled by Day 5. Joined last month!" name="Preethi Nair" role="SDE-2" company="Amazon"/>
+          <Testimonial emoji="💰" quote="Posted a Java role referral. Got 8 serious applicants in 2 days. Referred 2, both joined. Earned ₹1.5 Lakhs in bonuses!" name="Kiran Reddy" role="Senior Developer" company="Amazon"/>
+          <Testimonial emoji="🚀" quote="Applied to 50 jobs on Naukri — heard from 1. Applied to 3 referrals on HireBridge — heard from all 3. The difference is real." name="Arjun Sharma" role="SAP Consultant" company="Cognizant"/>
+        </div>
+      </section>
 
-      {/* FOOTER */}
-      <div style={{borderTop:`1px solid ${BR}`,padding:"24px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
-        <span style={{fontFamily:"'Cormorant Garamond',serif",background:`linear-gradient(135deg,${G},${GL})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontSize:18,fontWeight:700}}>RaYa Jobs</span>
-        <span style={{color:MT,fontSize:12}}>Get Referred. Get Hired. © 2025</span>
-        <span style={{color:`${G}66`,fontSize:11}}>Built with ❤️ by Raghu & Yaksha</span>
-      </div>
+      {/* ── PRICING ── */}
+      <section style={{background:BG2,padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)"}}>
+        <div style={{maxWidth:860,margin:"0 auto",textAlign:"center"}}>
+          <div style={{display:"inline-block",background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"5px 14px",fontSize:11,color:"#15803D",fontWeight:700,letterSpacing:"1px",marginBottom:14}}>PRICING</div>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(24px,5vw,40px)",fontWeight:800,color:PRIMARY,marginBottom:10}}>Simple, Honest Pricing</h2>
+          <p style={{color:MUTED,fontSize:15,marginBottom:44}}>Start free. Upgrade when you're ready.</p>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:18}}>
+            {/* Free */}
+            <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:22,padding:30,textAlign:"left"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY,marginBottom:4}}>Free</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:38,fontWeight:800,color:PRIMARY,marginBottom:4}}>₹0</div>
+              <div style={{color:MUTED,fontSize:12,marginBottom:20}}>To get started</div>
+              {["2 job applications","1 referral post","Profile & resume","Application tracking"].map(f=>(
+                <div key={f} style={{display:"flex",gap:8,alignItems:"center",fontSize:13,color:TEXT,marginBottom:9}}>
+                  <span style={{color:GREEN,fontWeight:700}}>✓</span>{f}
+                </div>
+              ))}
+              <button onClick={()=>nav("/register")} style={{marginTop:18,width:"100%",background:"none",border:`2px solid ${BORDER}`,color:PRIMARY,padding:"11px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started</button>
+            </div>
+            {/* Pro */}
+            <div style={{background:PRIMARY,border:`1px solid ${PRIMARY}`,borderRadius:22,padding:30,textAlign:"left",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:14,right:14,background:GREEN,color:"white",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:100}}>POPULAR</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"white",marginBottom:4}}>Pro</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:38,fontWeight:800,color:"white",marginBottom:4}}>₹799</div>
+              <div style={{color:"rgba(255,255,255,0.6)",fontSize:12,marginBottom:20}}>per 3 months</div>
+              {["Unlimited applications","Unlimited referral posts","Smart candidate routing","Priority listing","Resume storage","7-day guarantee"].map(f=>(
+                <div key={f} style={{display:"flex",gap:8,alignItems:"center",fontSize:13,color:"rgba(255,255,255,0.9)",marginBottom:9}}>
+                  <span style={{color:GREEN,fontWeight:700}}>✓</span>{f}
+                </div>
+              ))}
+              <button className="cta-btn" onClick={()=>nav("/register")} style={{marginTop:18,width:"100%",background:GREEN,border:"none",color:"white",padding:"11px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── BOTTOM CTA ── */}
+      <section style={{background:`linear-gradient(135deg,${PRIMARY} 0%,#0F3460 100%)`,padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)",textAlign:"center"}}>
+        <div style={{maxWidth:560,margin:"0 auto"}}>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(26px,5vw,46px)",fontWeight:800,color:"white",marginBottom:14,lineHeight:1.2}}>
+            Ready to Get<br/><span style={{color:GREEN}}>Referred?</span>
+          </h2>
+          <p style={{color:"rgba(255,255,255,0.7)",fontSize:15,lineHeight:1.8,marginBottom:32}}>Join thousands of IT professionals who found their dream job through a referral — or earned lakhs by referring others.</p>
+          <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+            <button className="cta-btn" onClick={()=>nav("/register")} style={{background:GREEN,border:"none",color:"white",padding:"14px 36px",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Join HireBridge Free →</button>
+            <button onClick={()=>nav("/browse")} style={{background:"transparent",border:"2px solid rgba(255,255,255,0.3)",color:"white",padding:"14px 28px",borderRadius:12,fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals</button>
+          </div>
+          <p style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:18}}>First 2 applications free • No credit card needed</p>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer style={{background:"white",borderTop:`1px solid ${BORDER}`,padding:"28px clamp(16px,4vw,48px)"}}>
+        <div style={{maxWidth:1100,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:14}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:28,height:28,borderRadius:8,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🤝</div>
+            <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:16,color:PRIMARY}}>HireBridge</span>
+          </div>
+          <span style={{color:MUTED,fontSize:12}}>© 2025 HireBridge. Connecting IT talent through referrals.</span>
+          <div style={{display:"flex",gap:18}}>
+            {["Privacy","Terms","Contact"].map(l=><span key={l} style={{color:MUTED,fontSize:12,cursor:"pointer"}}>{l}</span>)}
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

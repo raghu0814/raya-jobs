@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc, getDocs, collection, query, where, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../firebase/config";
 import NavBar from "../components/NavBar";
@@ -22,10 +22,10 @@ const allSkills=[
   "Linux","Networking","Cybersecurity","Blockchain","Unity"
 ];
 
-const Inp=({label,placeholder,type="text",value,onChange})=>(
+const Inp=({label,placeholder,type="text",value,onChange,maxLength})=>(
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
     <label style={{fontSize:10,fontWeight:700,color:G,letterSpacing:"2px",textTransform:"uppercase"}}>{label}</label>
-    <input type={type} placeholder={placeholder} value={value} onChange={onChange}
+    <input type={type} placeholder={placeholder} value={value} onChange={onChange} maxLength={maxLength}
       style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"12px 14px",color:WT,fontSize:14,outline:"none",fontFamily:"inherit"}}
       onFocus={e=>e.target.style.borderColor=G} onBlur={e=>e.target.style.borderColor=BR}/>
   </div>
@@ -87,32 +87,35 @@ export default function Register(){
   const [error,setError]=useState("");
   const [resumeFile,setResumeFile]=useState(null);
   const [skills,setSkills]=useState([]);
-  const [f,setF]=useState({name:"",phone:"",email:"",password:"",pan:"",city:"",exp:"",company:"",title:"",cCTC:"",eCTC:"",notice:"",pSkill:"",jobType:""});
+  const [f,setF]=useState({
+    name:"",phone:"",email:"",password:"",pan:"",city:"",
+    exp:"",company:"",title:"",cCTC:"",eCTC:"",
+    notice:"",pSkill:"",jobType:""
+  });
   const set=(k,v)=>setF(p=>({...p,[k]:v}));
 
-  const saveUser=async(uid,name,email,resumeURL="")=>{
-    await setDoc(doc(db,"users",uid),{
-      name,email,phone:f.phone,pan:f.pan,city:f.city,
-      experience:f.exp,currentCompany:f.company,currentTitle:f.title,
-      currentCTC:f.cCTC,expectedCTC:f.eCTC,noticePeriod:f.notice,
-      primarySkill:f.pSkill,otherSkills:skills,jobType:f.jobType,
-      resumeURL,plan:"free",status:"Active",registeredAt:serverTimestamp()
-    });
+  const validatePAN=(pan)=>/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
+
+  const checkPANExists=async(pan)=>{
+    const q=query(collection(db,"users"),where("pan","==",pan));
+    const snap=await getDocs(q);
+    return !snap.empty;
   };
 
-  const handleGoogle=async()=>{
+  const handleNext1=async()=>{
+    if(!f.name||!f.email||!f.password||!f.pan||!f.city){setError("Please fill all required fields");return;}
+    if(f.password.length<6){setError("Password must be at least 6 characters");return;}
+    if(!validatePAN(f.pan)){setError("Invalid PAN format. Example: ABCDE1234F");return;}
     setLoading(true);setError("");
     try{
-      const r=await signInWithPopup(auth,new GoogleAuthProvider());
-      await saveUser(r.user.uid,r.user.displayName,r.user.email);
-      nav("/dashboard");
-    }catch(e){setError("Google sign-up failed. Try again.");}
+      const exists=await checkPANExists(f.pan);
+      if(exists){setError("An account already exists with this PAN. One account per person only.");setLoading(false);return;}
+      setStep(2);
+    }catch(e){setError("Verification failed. Try again.");}
     finally{setLoading(false);}
   };
 
   const handleSubmit=async()=>{
-    if(!f.name||!f.email||!f.password){setError("Please fill all required fields");return;}
-    if(f.password.length<6){setError("Password must be at least 6 characters");return;}
     setLoading(true);setError("");
     try{
       const cred=await createUserWithEmailAndPassword(auth,f.email,f.password);
@@ -123,7 +126,17 @@ export default function Register(){
         await uploadBytes(r,resumeFile);
         resumeURL=await getDownloadURL(r);
       }
-      await saveUser(cred.user.uid,f.name,f.email,resumeURL);
+      await setDoc(doc(db,"users",cred.user.uid),{
+        name:f.name,email:f.email,phone:f.phone,
+        pan:f.pan,city:f.city,
+        experience:f.exp,currentCompany:f.company,
+        currentTitle:f.title,currentCTC:f.cCTC,
+        expectedCTC:f.eCTC,noticePeriod:f.notice,
+        primarySkill:f.pSkill,otherSkills:skills,
+        jobType:f.jobType,resumeURL,
+        plan:"free",status:"Active",
+        registeredAt:serverTimestamp()
+      });
       nav("/dashboard");
     }catch(e){
       setError(e.message.includes("email-already-in-use")?"Email already registered. Please login.":"Registration failed. Try again.");
@@ -138,21 +151,16 @@ export default function Register(){
 
   return(
     <div style={{background:BG,minHeight:"100vh",color:WT,fontFamily:"'DM Sans',sans-serif",paddingBottom:40}}>
-      <NavBar onBack={step>1?()=>setStep(s=>s-1):()=>nav("/")} right={<span style={{color:MT,fontSize:12}}>Step {step}/3</span>}/>
+      <NavBar onBack={step>1?()=>{setStep(s=>s-1);setError("");}:()=>nav("/")} right={<span style={{color:MT,fontSize:12}}>Step {step}/3</span>}/>
       <div style={{maxWidth:480,margin:"32px auto",padding:"0 20px"}}>
         <Prog/>
         <div style={{background:S1,border:`1px solid ${BR}`,borderRadius:16,padding:28}}>
-          {error&&<div style={{background:"#1A0A0A",border:"1px solid #EF444444",borderRadius:8,padding:"10px 14px",color:"#EF4444",fontSize:13,marginBottom:16}}>{error}</div>}
+          {error&&<div style={{background:"#1A0A0A",border:"1px solid #EF444444",borderRadius:8,padding:"10px 14px",color:"#EF4444",fontSize:13,marginBottom:16,lineHeight:1.5}}>{error}</div>}
 
+          {/* ── STEP 1 — Account Details ── */}
           {step===1&&<>
             <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:WT,marginBottom:4}}>Create Account</h2>
             <p style={{color:MT,fontSize:13,marginBottom:20}}>One account to find jobs and post referrals</p>
-            <button onClick={handleGoogle} disabled={loading} style={{width:"100%",background:"none",border:`1px solid ${BR}`,color:WT,padding:"12px",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:16}}>
-              <span style={{fontSize:18,fontWeight:700,color:"#4285F4"}}>G</span> Continue with Google
-            </button>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-              <div style={{flex:1,height:1,background:BR}}/><span style={{color:MT,fontSize:12}}>or email</span><div style={{flex:1,height:1,background:BR}}/>
-            </div>
             <div style={{display:"grid",gap:14}}>
               <Inp label="Full Name *" placeholder="Your full name" value={f.name} onChange={e=>set("name",e.target.value)}/>
               <Inp label="Phone *" placeholder="+91 98765 43210" value={f.phone} onChange={e=>set("phone",e.target.value)}/>
@@ -160,16 +168,18 @@ export default function Register(){
               <Inp label="Password *" placeholder="Min 6 characters" type="password" value={f.password} onChange={e=>set("password",e.target.value)}/>
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 <label style={{fontSize:10,fontWeight:700,color:G,letterSpacing:"2px",textTransform:"uppercase"}}>PAN Number *</label>
-                <input placeholder="ABCDE1234F" value={f.pan} onChange={e=>set("pan",e.target.value.toUpperCase())} maxLength={10}
-                  style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"12px 14px",color:WT,fontSize:14,outline:"none",fontFamily:"inherit",letterSpacing:"2px"}}
+                <input placeholder="ABCDE1234F" value={f.pan}
+                  onChange={e=>set("pan",e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""))}
+                  maxLength={10}
+                  style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"12px 14px",color:WT,fontSize:14,outline:"none",fontFamily:"inherit",letterSpacing:"3px"}}
                   onFocus={e=>e.target.style.borderColor=G} onBlur={e=>e.target.style.borderColor=BR}/>
-                <span style={{fontSize:11,color:MT}}>🔒 Ensures one account per person. Stored securely.</span>
+                <span style={{fontSize:11,color:MT}}>🔒 Ensures one account per person. Format: ABCDE1234F</span>
               </div>
               <Sel label="City *" options={["Hyderabad","Bangalore","Pune","Mumbai","Chennai","Delhi","Noida","Other"]} value={f.city} onChange={e=>set("city",e.target.value)}/>
             </div>
-            <button onClick={()=>{if(!f.name||!f.email||!f.password){setError("Please fill required fields");return;}setError("");setStep(2);}}
-              style={{marginTop:20,width:"100%",background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"13px",borderRadius:8,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-              Continue →
+            <button onClick={handleNext1} disabled={loading}
+              style={{marginTop:20,width:"100%",background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"13px",borderRadius:8,fontSize:14,fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"inherit",opacity:loading?0.7:1}}>
+              {loading?"Verifying...":"Continue →"}
             </button>
             <div style={{textAlign:"center",marginTop:14}}>
               <span style={{color:MT,fontSize:13}}>Already have an account? </span>
@@ -177,9 +187,10 @@ export default function Register(){
             </div>
           </>}
 
+          {/* ── STEP 2 — Professional Info ── */}
           {step===2&&<>
             <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:WT,marginBottom:4}}>Professional Info</h2>
-            <p style={{color:MT,fontSize:13,marginBottom:20}}>Helps us show you the right referrals</p>
+            <p style={{color:MT,fontSize:13,marginBottom:20}}>Helps us match you with the right referrals</p>
             <div style={{display:"grid",gap:14}}>
               <Inp label="Total Experience *" placeholder="e.g. 4 years" value={f.exp} onChange={e=>set("exp",e.target.value)}/>
               <Inp label="Current Company" placeholder="Cognizant, TCS, Amazon…" value={f.company} onChange={e=>set("company",e.target.value)}/>
@@ -195,6 +206,7 @@ export default function Register(){
             </button>
           </>}
 
+          {/* ── STEP 3 — Skills & Resume ── */}
           {step===3&&<>
             <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:WT,marginBottom:4}}>Skills & Resume</h2>
             <p style={{color:MT,fontSize:13,marginBottom:20}}>Add your skills and upload your resume</p>
