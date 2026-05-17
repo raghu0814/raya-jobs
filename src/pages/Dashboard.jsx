@@ -9,8 +9,6 @@ import Loader from "../components/Loader";
 
 const G="#C9A84C",GL="#E8C96A",BG="#080808",S1="#0F0F0F",S2="#161616",S3="#1E1E1E",BR="#2A2A2A",MT="#666666",WT="#F0EDE6";
 
-const BONUS={"Amazon":{min:75000,max:100000},"Microsoft":{min:100000,max:150000},"Google":{min:150000,max:200000},"Swiggy":{min:75000,max:120000},"PhonePe":{min:80000,max:100000},"Flipkart":{min:60000,max:100000},"Cognizant":{min:30000,max:50000},"Infosys":{min:30000,max:50000},"Wipro":{min:25000,max:45000},"TCS":{min:25000,max:40000},"Accenture":{min:35000,max:55000},"HCL":{min:25000,max:40000}};
-
 const allSkills=[
   "Java","Python","React","Angular","Vue.js","Node.js",
   "Spring Boot","Microservices","Kafka","Docker","Kubernetes",
@@ -25,7 +23,16 @@ const allSkills=[
   "Linux","Networking","Cybersecurity","Blockchain","Unity"
 ];
 
-const ST={"Applied":{color:"#60A5FA",icon:"📨"},"Reviewing":{color:"#FBBF24",icon:"👀"},"Referred":{color:"#A78BFA",icon:"🚀"},"Shortlisted":{color:G,icon:"✓"},"Interviewing":{color:"#F97316",icon:"🎯"},"Offered":{color:"#4ADE80",icon:"🎉"},"Hired":{color:G,icon:"🏆"},"Rejected":{color:"#EF4444",icon:"✕"}};
+const ST={
+  "Applied":{color:"#60A5FA",icon:"📨"},
+  "Reviewing":{color:"#FBBF24",icon:"👀"},
+  "Referred":{color:"#A78BFA",icon:"🚀"},
+  "Shortlisted":{color:G,icon:"✓"},
+  "Interviewing":{color:"#F97316",icon:"🎯"},
+  "Offered":{color:"#4ADE80",icon:"🎉"},
+  "Hired":{color:G,icon:"🏆"},
+  "Rejected":{color:"#EF4444",icon:"✕"}
+};
 
 const Inp=({label,placeholder,type="text",value,onChange})=>(
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -36,19 +43,8 @@ const Inp=({label,placeholder,type="text",value,onChange})=>(
   </div>
 );
 
-const Sel=({label,options,value,onChange})=>(
-  <div style={{display:"flex",flexDirection:"column",gap:6}}>
-    <label style={{fontSize:10,fontWeight:700,color:G,letterSpacing:"2px",textTransform:"uppercase"}}>{label}</label>
-    <select value={value} onChange={onChange} style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"12px 14px",color:value?WT:MT,fontSize:14,outline:"none",fontFamily:"inherit",appearance:"none"}}>
-      <option value="">Select…</option>
-      {options.map(o=><option key={o} value={o} style={{background:S2}}>{o}</option>)}
-    </select>
-  </div>
-);
-
-// ── Shared skill selector with type + tap ────────────────
-function SkillSelector({skills,setSkills,exclude}){
-  const [input,setInput]=useState("");
+function SkillSelector({skills,setSkills}){
+  const[input,setInput]=useState("");
   const add=(s)=>{const v=s.trim();if(v&&!skills.includes(v))setSkills(p=>[...p,v]);};
   const handleKey=(e)=>{if(e.key==="Enter"&&input.trim()){add(input);setInput("");}};
   return(
@@ -70,63 +66,58 @@ function SkillSelector({skills,setSkills,exclude}){
           style={{flex:1,background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"10px 14px",color:WT,fontSize:13,outline:"none",fontFamily:"inherit"}}
           onFocus={e=>e.target.style.borderColor=G} onBlur={e=>e.target.style.borderColor=BR}/>
         <button onClick={()=>{add(input);setInput("");}}
-          style={{background:`${G}22`,border:`1px solid ${G}44`,color:G,padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-          Add
-        </button>
+          style={{background:`${G}22`,border:`1px solid ${G}44`,color:G,padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Add</button>
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-        {allSkills.filter(s=>!skills.includes(s)&&s!==exclude).map(s=>(
+        {allSkills.filter(s=>!skills.includes(s)).map(s=>(
           <span key={s} onClick={()=>add(s)}
-            style={{background:S3,border:`1px solid ${BR}`,color:MT,padding:"4px 10px",borderRadius:100,fontSize:11,cursor:"pointer"}}>
-            {s}
-          </span>
+            style={{background:S3,border:`1px solid ${BR}`,color:MT,padding:"4px 10px",borderRadius:100,fontSize:11,cursor:"pointer"}}>{s}</span>
         ))}
       </div>
     </div>
   );
 }
 
-// ── Check if a post is expired ────────────────────────────
 function isExpired(lastDate){
   if(!lastDate) return false;
-  return new Date(lastDate) < new Date();
+  return new Date(lastDate)<new Date();
+}
+
+function daysLeft(lastDate){
+  if(!lastDate) return null;
+  return Math.ceil((new Date(lastDate)-new Date())/(1000*60*60*24));
 }
 
 export default function Dashboard(){
   const nav=useNavigate();
   const user=auth.currentUser;
-  const [tab,setTab]=useState("applications");
-  const [loading,setLoading]=useState(true);
-  const [apps,setApps]=useState([]);
-  const [expanded,setExpanded]=useState(null);
-  const [myPosts,setMyPosts]=useState([]);
-  const [selectedPost,setSelectedPost]=useState(null);
-  const [applicants,setApplicants]=useState([]);
-  const [loadingApps,setLoadingApps]=useState(false);
-
-  // Post referral form
-  const [posting,setPosting]=useState(false);
-  const [postError,setPostError]=useState("");
-  const [postSkills,setPostSkills]=useState([]);
-  const [j,setJ]=useState({company:"",role:"",expMin:"",expMax:"",ctcMin:"",ctcMax:"",slots:"2",lastDate:"",desc:""});
+  const[tab,setTab]=useState("applications");
+  const[loading,setLoading]=useState(true);
+  const[apps,setApps]=useState([]);
+  const[expanded,setExpanded]=useState(null);
+  const[myPosts,setMyPosts]=useState([]);
+  const[selectedPost,setSelectedPost]=useState(null);
+  const[applicants,setApplicants]=useState([]);
+  const[loadingApps,setLoadingApps]=useState(false);
+  const[posting,setPosting]=useState(false);
+  const[postError,setPostError]=useState("");
+  const[postSkills,setPostSkills]=useState([]);
+  const[j,setJ]=useState({company:"",role:"",expMin:"",expMax:"",ctcMin:"",ctcMax:"",slots:"2",lastDate:"",desc:""});
   const sj=(k,v)=>setJ(p=>({...p,[k]:v}));
-  const bonus=BONUS[j.company]||{min:25000,max:75000};
 
   useEffect(()=>{
     if(!user){nav("/login");return;}
     const fetchAll=async()=>{
       try{
-        const [aSnap,pSnap]=await Promise.all([
+        const[aSnap,pSnap]=await Promise.all([
           getDocs(query(collection(db,"applications"),where("candidateId","==",user.uid))),
           getDocs(query(collection(db,"referralPosts"),where("employeeId","==",user.uid)))
         ]);
         setApps(aSnap.docs.map(d=>({id:d.id,...d.data()})));
-
-        // Auto-close expired posts in Firestore + filter locally
         const posts=pSnap.docs.map(d=>({id:d.id,...d.data()}));
         const today=new Date();
         for(const p of posts){
-          if(p.lastDate && new Date(p.lastDate)<today && p.status==="Active"){
+          if(p.lastDate&&new Date(p.lastDate)<today&&p.status==="Active"){
             await updateDoc(doc(db,"referralPosts",p.id),{status:"Closed"});
             p.status="Closed";
           }
@@ -155,7 +146,7 @@ export default function Dashboard(){
 
   const handlePostReferral=async()=>{
     if(!j.company||!j.role){setPostError("Company and role are required");return;}
-    if(!j.lastDate){setPostError("Please set a last date for the referral");return;}
+    if(!j.lastDate){setPostError("Please set a last date");return;}
     if(new Date(j.lastDate)<new Date()){setPostError("Last date must be in the future");return;}
     setPosting(true);setPostError("");
     try{
@@ -165,12 +156,12 @@ export default function Dashboard(){
         role:j.role,skills:postSkills,
         expMin:Number(j.expMin)||0,expMax:Number(j.expMax)||0,
         ctcMin:Number(j.ctcMin)||0,ctcMax:Number(j.ctcMax)||0,
-        slots:Number(j.slots)||2,description:j.desc,
-        bonusMin:bonus.min,bonusMax:bonus.max,
+        slots:Number(j.slots)||2,
+        description:j.desc,
         status:"Active",lastDate:j.lastDate,
         postedAt:serverTimestamp()
       });
-      setMyPosts(p=>[{id:newRef.id,employeeId:user.uid,employeeName:user.displayName,status:"Active",...j,skills:postSkills,bonusMin:bonus.min,bonusMax:bonus.max},...p]);
+      setMyPosts(p=>[{id:newRef.id,employeeId:user.uid,employeeName:user.displayName,status:"Active",...j,skills:postSkills},...p]);
       setJ({company:"",role:"",expMin:"",expMax:"",ctcMin:"",ctcMax:"",slots:"2",lastDate:"",desc:""});
       setPostSkills([]);
       setTab("myreferrals");
@@ -185,13 +176,6 @@ export default function Dashboard(){
     active:apps.filter(a=>!["Rejected","Hired"].includes(a.status)).length,
     myPosts:myPosts.filter(p=>p.status==="Active").length,
     hired:apps.filter(a=>a.status==="Hired").length,
-  };
-
-  // Days remaining for a post
-  const daysLeft=(lastDate)=>{
-    if(!lastDate) return null;
-    const diff=Math.ceil((new Date(lastDate)-new Date())/(1000*60*60*24));
-    return diff;
   };
 
   if(loading) return <Loader text="Loading dashboard..."/>;
@@ -232,14 +216,11 @@ export default function Dashboard(){
         {/* TABS */}
         <div style={{display:"flex",gap:0,borderBottom:`1px solid ${BR}`,overflowX:"auto"}}>
           {[["applications","My Applications"],["myreferrals","My Referrals"],["postreferral","+ Post Referral"],["profile","Profile"]].map(([k,l])=>(
-            <button key={k} onClick={()=>{setTab(k);setSelectedPost(null);}} style={{background:"none",border:"none",cursor:"pointer",padding:"10px 14px",fontSize:12,fontWeight:tab===k?700:400,color:tab===k?G:MT,fontFamily:"inherit",borderBottom:`2px solid ${tab===k?G:"transparent"}`,whiteSpace:"nowrap"}}>
-              {l}
-            </button>
+            <button key={k} onClick={()=>{setTab(k);setSelectedPost(null);}} style={{background:"none",border:"none",cursor:"pointer",padding:"10px 14px",fontSize:12,fontWeight:tab===k?700:400,color:tab===k?G:MT,fontFamily:"inherit",borderBottom:`2px solid ${tab===k?G:"transparent"}`,whiteSpace:"nowrap"}}>{l}</button>
           ))}
         </div>
       </div>
 
-      {/* CONTENT */}
       <div style={{padding:"20px",maxWidth:860,margin:"0 auto"}}>
 
         {/* ── MY APPLICATIONS ── */}
@@ -296,39 +277,41 @@ export default function Dashboard(){
               <div style={{textAlign:"center",padding:"60px 0",color:MT}}>
                 <div style={{fontSize:40,marginBottom:12}}>📝</div>
                 <div style={{color:WT,fontSize:16,marginBottom:8}}>No referral posts yet</div>
-                <div style={{fontSize:13,marginBottom:20}}>Post your company's open roles and earn your referral bonus</div>
+                <div style={{fontSize:13,marginBottom:8}}>Post your company's open roles and help candidates get referred.</div>
+                <div style={{background:`${G}08`,border:`1px solid ${G}22`,borderRadius:10,padding:"12px 16px",marginBottom:20,fontSize:12,color:MT,lineHeight:1.7,maxWidth:400,margin:"0 auto 20px"}}>
+                  💡 Your company already has a referral programme. RaYa helps you find the right candidate faster so your referral succeeds and you earn your company's reward.
+                </div>
                 <button onClick={()=>setTab("postreferral")} style={{background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"12px 24px",borderRadius:8,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Post Your First Referral →</button>
               </div>
             ):myPosts.map(post=>{
               const dl=daysLeft(post.lastDate);
-              const expired=post.status==="Closed"||dl<=0;
+              const expired=post.status==="Closed"||(dl!==null&&dl<=0);
               return(
                 <div key={post.id} style={{background:S1,border:`1px solid ${expired?"#EF444422":BR}`,borderRadius:14,padding:18,marginBottom:12,opacity:expired?0.7:1}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
                     <div>
                       <div style={{fontWeight:700,fontSize:15,color:WT,marginBottom:6}}>{post.role}</div>
                       <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                        <Badge color={expired?"#EF4444":"#4ADE80"}>{expired?"Closed":post.status}</Badge>
+                        <Badge color={expired?"#EF4444":"#4ADE80"}>{expired?"Closed":post.status||"Active"}</Badge>
                         {!expired&&dl!==null&&<Badge color={dl<=3?"#EF4444":dl<=7?"#FBBF24":"#60A5FA"}>{dl}d left</Badge>}
                         <Badge color={MT}>{post.company}</Badge>
                       </div>
                     </div>
-                    <div style={{background:`${G}15`,border:`1px solid ${G}33`,borderRadius:8,padding:"8px 12px",textAlign:"center"}}>
-                      <div style={{fontSize:9,color:G,fontWeight:700}}>BONUS</div>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,color:G}}>₹{Math.round((post.bonusMin||30000)/1000)}k</div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:G,lineHeight:1}}>{post.slots||2}</div>
+                      <div style={{color:MT,fontSize:11}}>slots</div>
                     </div>
                   </div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
                     {(post.skills||[]).map(s=><span key={s} style={{background:S3,border:`1px solid ${BR}`,color:"#AAA",padding:"3px 10px",borderRadius:100,fontSize:11}}>{s}</span>)}
                   </div>
-                  {!expired&&(
+                  {!expired?(
                     <button onClick={()=>loadApplicants(post)} style={{width:"100%",background:`${G}15`,border:`1px solid ${G}33`,color:G,padding:"10px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                       View Applicants →
                     </button>
-                  )}
-                  {expired&&(
+                  ):(
                     <div style={{background:"#1A0A0A",border:"1px solid #EF444433",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#EF4444",fontWeight:600,textAlign:"center"}}>
-                      This referral post has expired and is no longer visible to job seekers.
+                      This post has expired and is no longer visible to job seekers.
                     </div>
                   )}
                 </div>
@@ -350,7 +333,7 @@ export default function Dashboard(){
               <div style={{textAlign:"center",padding:"40px 0",color:MT}}>
                 <div style={{fontSize:32,marginBottom:10}}>👥</div>
                 <div style={{color:WT,fontSize:15}}>No applicants yet</div>
-                <div style={{fontSize:13,marginTop:4}}>Share RaYa with IT professionals to get applications</div>
+                <div style={{fontSize:13,marginTop:4}}>Share RaYa Jobs to get applications</div>
               </div>
             ):applicants.map(app=>{
               const cfg=ST[app.status]||ST["Applied"];
@@ -370,8 +353,8 @@ export default function Dashboard(){
                       ))}
                     </div>
                   )}
-                  {app.status==="Referred"&&<div style={{background:"#0A0A1F",border:"1px solid #A78BFA44",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#A78BFA",fontWeight:600}}>🚀 Referred internally — your bonus is incoming!</div>}
-                  {app.status==="Hired"&&<div style={{background:`${G}10`,border:`1px solid ${G}33`,borderRadius:8,padding:"10px 12px",fontSize:12,color:G,fontWeight:600}}>🏆 Hired — referral bonus from your company incoming!</div>}
+                  {app.status==="Referred"&&<div style={{background:"#0A0A1F",border:"1px solid #A78BFA44",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#A78BFA",fontWeight:600}}>🚀 Referred internally — your company's HR team will take it from here.</div>}
+                  {app.status==="Hired"&&<div style={{background:`${G}10`,border:`1px solid ${G}33`,borderRadius:8,padding:"10px 12px",fontSize:12,color:G,fontWeight:600}}>🏆 Hired! Check with your HR team about your referral reward.</div>}
                 </div>
               );
             })}
@@ -382,13 +365,14 @@ export default function Dashboard(){
         {tab==="postreferral"&&(
           <div style={{background:S1,border:`1px solid ${BR}`,borderRadius:16,padding:28}}>
             <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,fontWeight:700,color:WT,marginBottom:4}}>Post a Referral</h2>
-            <p style={{color:MT,fontSize:13,marginBottom:14}}>Help someone get hired and earn your referral bonus.</p>
+            <p style={{color:MT,fontSize:13,marginBottom:16}}>Help someone get hired through your company's referral programme.</p>
 
-            <div style={{background:`${G}0A`,border:`1px solid ${G}22`,borderRadius:10,padding:"10px 14px",marginBottom:20,display:"flex",gap:10,alignItems:"center"}}>
-              <span style={{fontSize:18}}>💰</span>
+            {/* Clarity box — why post */}
+            <div style={{background:`${G}08`,border:`1px solid ${G}22`,borderRadius:10,padding:"12px 14px",marginBottom:20,display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span style={{fontSize:18,flexShrink:0}}>💡</span>
               <div>
-                <div style={{color:G,fontWeight:700,fontSize:13}}>Est. Bonus: ₹{(bonus.min/1000).toFixed(0)}k–₹{(bonus.max/1000).toFixed(0)}k</div>
-                <div style={{color:MT,fontSize:11}}>from your company when candidate joins</div>
+                <div style={{color:G,fontWeight:700,fontSize:13,marginBottom:4}}>Why post on RaYa?</div>
+                <div style={{color:MT,fontSize:12,lineHeight:1.7}}>Your company already rewards you when someone you refer gets hired. RaYa helps you find the right candidate faster — so your referral actually succeeds. Better candidates = better chance of your referral getting accepted by HR.</div>
               </div>
             </div>
 
@@ -419,7 +403,7 @@ export default function Dashboard(){
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 <label style={{fontSize:10,fontWeight:700,color:G,letterSpacing:"2px",textTransform:"uppercase"}}>Job Description</label>
-                <textarea placeholder="What is this role about? What are you looking for?" value={j.desc} onChange={e=>sj("desc",e.target.value)} rows={3}
+                <textarea placeholder="What is this role about? What kind of candidate are you looking for?" value={j.desc} onChange={e=>sj("desc",e.target.value)} rows={3}
                   style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"12px 14px",color:WT,fontSize:14,outline:"none",fontFamily:"inherit",resize:"vertical"}}/>
               </div>
             </div>
@@ -428,9 +412,7 @@ export default function Dashboard(){
               style={{marginTop:20,width:"100%",background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"13px",borderRadius:8,fontSize:14,fontWeight:700,cursor:posting?"not-allowed":"pointer",fontFamily:"inherit",opacity:posting?0.7:1}}>
               {posting?"Posting...":"Post Referral ✦"}
             </button>
-            <div style={{marginTop:10,fontSize:12,color:MT,textAlign:"center"}}>
-              First 1 post free. Unlimited with ₹799 / 3-month plan.
-            </div>
+            <div style={{marginTop:10,fontSize:12,color:MT,textAlign:"center"}}>First 1 post free. Unlimited with ₹799 / 3-month plan.</div>
           </div>
         )}
 
