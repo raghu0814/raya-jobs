@@ -186,7 +186,7 @@ export default function Landing(){
       <nav style={{position:"sticky",top:0,zIndex:100,background:scrolled?"rgba(255,255,255,0.97)":"white",backdropFilter:"blur(16px)",borderBottom:scrolled?`1px solid ${BORDER}`:"1px solid transparent",padding:`0 clamp(16px,4vw,48px)`,height:66,display:"flex",alignItems:"center",justifyContent:"space-between",transition:"all 0.3s"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>nav("/")}>
           <div style={{width:34,height:34,borderRadius:10,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🤝</div>
-          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:19,color:PRIMARY}}>HireBridge</span>
+          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:19,color:PRIMARY}}>RaYa Jobs</span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:24}}>
           <span className="nav-link" onClick={()=>nav("/browse")} style={{color:MUTED,fontSize:13,fontWeight:500,cursor:"pointer"}}>Browse Jobs</span>
@@ -210,7 +210,7 @@ export default function Landing(){
         <div className="fadein">
           <div style={{display:"inline-flex",alignItems:"center",gap:8,background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"6px 14px",marginBottom:22,fontSize:11,color:"#15803D",fontWeight:700,letterSpacing:"0.5px"}}>
             <span style={{width:7,height:7,borderRadius:"50%",background:GREEN,display:"inline-block"}}/>
-            INDIA'S PROFESSIONAL REFERRAL PLATFORM
+            INDIA'S REFERRAL JOBS PLATFORM
           </div>
           <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(34px,6vw,58px)",fontWeight:800,lineHeight:1.15,marginBottom:18,color:PRIMARY}}>
             Refer Talent.<br/><span style={{color:GREEN}}>Get Rewarded.</span>
@@ -259,7 +259,7 @@ export default function Landing(){
       <section style={{padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)",maxWidth:1200,margin:"0 auto"}}>
         <div style={{textAlign:"center",marginBottom:52}}>
           <div style={{display:"inline-block",background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"5px 14px",fontSize:11,color:"#15803D",fontWeight:700,letterSpacing:"1px",marginBottom:14}}>THE PROCESS</div>
-          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(26px,5vw,42px)",fontWeight:800,color:PRIMARY,marginBottom:12}}>How HireBridge Works</h2>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(26px,5vw,42px)",fontWeight:800,color:PRIMARY,marginBottom:12}}>How RaYa Jobs Works</h2>
           <p style={{color:MUTED,fontSize:15,maxWidth:480,margin:"0 auto",lineHeight:1.7}}>Four simple steps from posting a referral to earning your bonus</p>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16}}>
@@ -275,7 +275,7 @@ export default function Landing(){
         <div style={{maxWidth:1100,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:48}}>
             <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(24px,5vw,40px)",fontWeight:800,color:PRIMARY,marginBottom:10}}>Built for Everyone in IT</h2>
-            <p style={{color:MUTED,fontSize:15,maxWidth:440,margin:"0 auto"}}>Whether you're job hunting or want to earn a referral bonus — HireBridge works both ways</p>
+            <p style={{color:MUTED,fontSize:15,maxWidth:440,margin:"0 auto"}}>Whether you're job hunting or want to earn a referral bonus — RaYa Jobs works both ways</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:20}}>
             {/* Job Seeker card */}
@@ -309,9 +309,9 @@ export default function Landing(){
           <p style={{color:MUTED,fontSize:14}}>Real results from real IT professionals</p>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18}}>
-          <Testimonial emoji="🎉" quote="Got referred to Amazon through HireBridge. Employee responded in 3 days, interview scheduled by Day 5. Joined last month!" name="Preethi Nair" role="SDE-2" company="Amazon"/>
+          <Testimonial emoji="🎉" quote="Got referred to Amazon through RaYa Jobs. Employee responded in 3 days, interview scheduled by Day 5. Joined last month!" name="Preethi Nair" role="SDE-2" company="Amazon"/>
           <Testimonial emoji="💰" quote="Posted a Java role referral. Got 8 serious applicants in 2 days. Referred 2, both joined. Earned ₹1.5 Lakhs in bonuses!" name="Kiran Reddy" role="Senior Developer" company="Amazon"/>
-          <Testimonial emoji="🚀" quote="Applied to 50 jobs on Naukri — heard from 1. Applied to 3 referrals on HireBridge — heard from all 3. The difference is real." name="Arjun Sharma" role="SAP Consultant" company="Cognizant"/>
+          <Testimonial emoji="🚀" quote="Applied to 50 jobs on Naukri — heard from 1. Applied to 3 referrals on RaYa Jobs — heard from all 3. The difference is real." name="Arjun Sharma" role="SAP Consultant" company="Cognizant"/>
         </div>
       </section>
 
@@ -359,7 +359,7 @@ export default function Landing(){
           </h2>
           <p style={{color:"rgba(255,255,255,0.7)",fontSize:15,lineHeight:1.8,marginBottom:32}}>Join thousands of IT professionals who found their dream job through a referral — or earned lakhs by referring others.</p>
           <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
-            <button className="cta-btn" onClick={()=>nav("/register")} style={{background:GREEN,border:"none",color:"white",padding:"14px 36px",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Join HireBridge Free →</button>
+            <button className="cta-btn" onClick={()=>nav("/register")} style={{background:GREEN,border:"none",color:"white",padding:"14px 36px",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Join RaYa Free →</button>
             <button onClick={()=>nav("/browse")} style={{background:"transparent",border:"2px solid rgba(255,255,255,0.3)",color:"white",padding:"14px 28px",borderRadius:12,fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals</button>
           </div>
           <p style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:18}}>First 2 applications free • No credit card needed</p>
@@ -371,9 +371,9 @@ export default function Landing(){
         <div style={{maxWidth:1100,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:14}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{width:28,height:28,borderRadius:8,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🤝</div>
-            <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:16,color:PRIMARY}}>HireBridge</span>
+            <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:16,color:PRIMARY}}>RaYa Jobs</span>
           </div>
-          <span style={{color:MUTED,fontSize:12}}>© 2025 HireBridge. Connecting IT talent through referrals.</span>
+          <span style={{color:MUTED,fontSize:12}}>© 2025 RaYa Jobs. Connecting IT talent through referrals.</span>
           <div style={{display:"flex",gap:18}}>
             {["Privacy","Terms","Contact"].map(l=><span key={l} style={{color:MUTED,fontSize:12,cursor:"pointer"}}>{l}</span>)}
           </div>
