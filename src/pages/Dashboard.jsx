@@ -1,6 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import {
+  collection, query, where, getDocs, addDoc,
+  updateDoc, doc, serverTimestamp, orderBy,
+  onSnapshot
+} from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { db, auth } from "../firebase/config";
 import Timeline from "../components/Timeline";
@@ -34,15 +38,148 @@ const ST={
   "Rejected":{color:"#EF4444",icon:"✕"}
 };
 
-const Inp=({label,placeholder,type="text",value,onChange})=>(
-  <div style={{display:"flex",flexDirection:"column",gap:6}}>
-    <label style={{fontSize:10,fontWeight:700,color:G,letterSpacing:"2px",textTransform:"uppercase"}}>{label}</label>
-    <input type={type} placeholder={placeholder} value={value} onChange={onChange}
-      style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"12px 14px",color:WT,fontSize:14,outline:"none",fontFamily:"inherit"}}
-      onFocus={e=>e.target.style.borderColor=G} onBlur={e=>e.target.style.borderColor=BR}/>
-  </div>
-);
+// ── COMMENT THREAD COMPONENT ──────────────────────────────
+function CommentThread({ appId, currentUser, role }){
+  const[comments,setComments]=useState([]);
+  const[text,setText]=useState("");
+  const[sending,setSending]=useState(false);
+  const bottomRef=useRef(null);
 
+  useEffect(()=>{
+    // Real-time listener on comments subcollection
+    const q=query(
+      collection(db,"applications",appId,"comments"),
+      orderBy("createdAt","asc")
+    );
+    const unsub=onSnapshot(q,(snap)=>{
+      setComments(snap.docs.map(d=>({id:d.id,...d.data()})));
+    });
+    return()=>unsub();
+  },[appId]);
+
+  useEffect(()=>{
+    // Auto scroll to bottom when new comment arrives
+    bottomRef.current?.scrollIntoView({behavior:"smooth"});
+  },[comments]);
+
+  const handleSend=async()=>{
+    if(!text.trim()) return;
+    setSending(true);
+    try{
+      await addDoc(collection(db,"applications",appId,"comments"),{
+        text:text.trim(),
+        authorId:currentUser.uid,
+        authorName:currentUser.displayName,
+        authorRole:role, // "candidate" or "employee"
+        createdAt:serverTimestamp()
+      });
+      setText("");
+    }catch(e){console.error(e);}
+    finally{setSending(false);}
+  };
+
+  const handleKey=(e)=>{
+    if(e.key==="Enter"&&!e.shiftKey){
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const formatTime=(ts)=>{
+    if(!ts?.toDate) return "";
+    const d=ts.toDate();
+    return d.toLocaleDateString("en-IN",{day:"numeric",month:"short"})+", "+d.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
+  };
+
+  return(
+    <div style={{borderTop:`1px solid ${BR}`,marginTop:8}}>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 16px 8px",borderBottom:`1px solid ${S3}`}}>
+        <span style={{fontSize:14}}>💬</span>
+        <span style={{fontSize:11,fontWeight:700,color:G,letterSpacing:"2px"}}>UPDATES & COMMENTS</span>
+        {comments.length>0&&<span style={{background:`${G}22`,border:`1px solid ${G}44`,color:G,fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:100}}>{comments.length}</span>}
+      </div>
+
+      {/* Messages */}
+      <div style={{maxHeight:300,overflowY:"auto",padding:"8px 16px",display:"flex",flexDirection:"column",gap:10}}>
+        {comments.length===0&&(
+          <div style={{textAlign:"center",padding:"20px 0",color:MT,fontSize:12}}>
+            No updates yet. Add the first comment below.
+          </div>
+        )}
+        {comments.map(c=>{
+          const isMe=c.authorId===currentUser.uid;
+          const isCandidate=c.authorRole==="candidate";
+          return(
+            <div key={c.id} style={{display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start"}}>
+              {/* Author label */}
+              <div style={{fontSize:10,color:MT,marginBottom:3,display:"flex",alignItems:"center",gap:4}}>
+                <span style={{fontWeight:600,color:isCandidate?"#60A5FA":"#A78BFA"}}>{c.authorName}</span>
+                <span style={{fontSize:9}}>•</span>
+                <span>{isCandidate?"Job Seeker":"Employee"}</span>
+                <span style={{fontSize:9}}>•</span>
+                <span>{formatTime(c.createdAt)}</span>
+              </div>
+              {/* Bubble */}
+              <div style={{
+                maxWidth:"80%",
+                background:isMe?`${G}22`:S3,
+                border:`1px solid ${isMe?G+"44":BR}`,
+                borderRadius:isMe?"14px 14px 4px 14px":"14px 14px 14px 4px",
+                padding:"10px 14px",
+                fontSize:13,
+                color:WT,
+                lineHeight:1.6,
+                wordBreak:"break-word"
+              }}>
+                {c.text}
+              </div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef}/>
+      </div>
+
+      {/* Input */}
+      <div style={{padding:"10px 16px 14px",borderTop:`1px solid ${S3}`}}>
+        <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+          <textarea
+            value={text}
+            onChange={e=>setText(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Add an update or ask a question… (Enter to send)"
+            rows={2}
+            style={{
+              flex:1,background:S2,border:`1px solid ${BR}`,borderRadius:10,
+              padding:"10px 14px",color:WT,fontSize:13,outline:"none",
+              fontFamily:"inherit",resize:"none",lineHeight:1.5
+            }}
+            onFocus={e=>e.target.style.borderColor=G}
+            onBlur={e=>e.target.style.borderColor=BR}
+          />
+          <button
+            onClick={handleSend}
+            disabled={sending||!text.trim()}
+            style={{
+              background:text.trim()?`linear-gradient(135deg,${G},${GL})`:`${G}33`,
+              border:"none",color:text.trim()?BG:MT,
+              padding:"10px 16px",borderRadius:10,
+              fontSize:13,fontWeight:700,cursor:text.trim()?"pointer":"not-allowed",
+              fontFamily:"inherit",flexShrink:0,
+              transition:"all 0.2s"
+            }}>
+            {sending?"...":"Send"}
+          </button>
+        </div>
+        <div style={{fontSize:10,color:MT,marginTop:5}}>
+          Press Enter to send • Shift+Enter for new line
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── SKILL SELECTOR ────────────────────────────────────────
 function SkillSelector({skills,setSkills}){
   const[input,setInput]=useState("");
   const add=(s)=>{const v=s.trim();if(v&&!skills.includes(v))setSkills(p=>[...p,v]);};
@@ -78,6 +215,15 @@ function SkillSelector({skills,setSkills}){
   );
 }
 
+const Inp=({label,placeholder,type="text",value,onChange})=>(
+  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+    <label style={{fontSize:10,fontWeight:700,color:G,letterSpacing:"2px",textTransform:"uppercase"}}>{label}</label>
+    <input type={type} placeholder={placeholder} value={value} onChange={onChange}
+      style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"12px 14px",color:WT,fontSize:14,outline:"none",fontFamily:"inherit"}}
+      onFocus={e=>e.target.style.borderColor=G} onBlur={e=>e.target.style.borderColor=BR}/>
+  </div>
+);
+
 function isExpired(lastDate){
   if(!lastDate) return false;
   return new Date(lastDate)<new Date();
@@ -88,16 +234,18 @@ function daysLeft(lastDate){
   return Math.ceil((new Date(lastDate)-new Date())/(1000*60*60*24));
 }
 
+// ── MAIN DASHBOARD ────────────────────────────────────────
 export default function Dashboard(){
   const nav=useNavigate();
   const user=auth.currentUser;
   const[tab,setTab]=useState("applications");
   const[loading,setLoading]=useState(true);
   const[apps,setApps]=useState([]);
-  const[expanded,setExpanded]=useState(null);
+  const[expanded,setExpanded]=useState(null); // expanded application id
   const[myPosts,setMyPosts]=useState([]);
   const[selectedPost,setSelectedPost]=useState(null);
   const[applicants,setApplicants]=useState([]);
+  const[expandedApp,setExpandedApp]=useState(null); // expanded applicant id
   const[loadingApps,setLoadingApps]=useState(false);
   const[posting,setPosting]=useState(false);
   const[postError,setPostError]=useState("");
@@ -169,7 +317,7 @@ export default function Dashboard(){
     finally{setPosting(false);}
   };
 
-  const handleLogout=async()=>{await signOut(auth);nav("/");};
+  const handleLogout=async()=>{await signOut(auth);nav("/login");};
 
   const counts={
     applications:apps.length,
@@ -226,6 +374,13 @@ export default function Dashboard(){
         {/* ── MY APPLICATIONS ── */}
         {tab==="applications"&&(
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
+
+            {/* Info box about comment feature */}
+            <div style={{background:`${G}08`,border:`1px solid ${G}22`,borderRadius:10,padding:"10px 14px",display:"flex",gap:8,alignItems:"flex-start",fontSize:12,color:MT,lineHeight:1.6}}>
+              <span style={{fontSize:14,flexShrink:0}}>💬</span>
+              <span>Click any application to expand it and <strong style={{color:G}}>add updates or ask questions</strong> directly to the employee who referred you.</span>
+            </div>
+
             {apps.length===0?(
               <div style={{textAlign:"center",padding:"60px 0",color:MT}}>
                 <div style={{fontSize:40,marginBottom:12}}>📋</div>
@@ -235,29 +390,62 @@ export default function Dashboard(){
               </div>
             ):apps.map(app=>{
               const cfg=ST[app.status]||ST["Applied"];
+              const isOpen=expanded===app.id;
               return(
-                <div key={app.id} style={{background:S1,border:`1px solid ${expanded===app.id?G+"55":BR}`,borderRadius:14,overflow:"hidden",cursor:"pointer"}} onClick={()=>setExpanded(expanded===app.id?null:app.id)}>
-                  <div style={{padding:16}}>
+                <div key={app.id} style={{background:S1,border:`1px solid ${isOpen?G+"55":BR}`,borderRadius:14,overflow:"hidden",transition:"border-color 0.2s"}}>
+                  {/* Card header — click to expand */}
+                  <div style={{padding:16,cursor:"pointer"}} onClick={()=>setExpanded(isOpen?null:app.id)}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
                       <div style={{minWidth:0}}>
                         <div style={{fontWeight:700,fontSize:14,color:WT,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{app.role}</div>
                         <div style={{color:MT,fontSize:12,marginTop:1}}>{app.company}</div>
                       </div>
-                      <Badge color={cfg.color}>{cfg.icon} {app.status}</Badge>
+                      <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                        <Badge color={cfg.color}>{cfg.icon} {app.status}</Badge>
+                        <span style={{color:MT,fontSize:16}}>{isOpen?"▲":"▼"}</span>
+                      </div>
                     </div>
                     <Timeline status={app.status}/>
                   </div>
-                  {expanded===app.id&&(
-                    <div style={{borderTop:`1px solid ${BR}`,padding:"12px 16px",background:S2}}>
-                      <div style={{color:MT,fontSize:12}}>Applied: {app.appliedAt?.toDate?.()?.toLocaleDateString()||"Recently"}</div>
-                      {app.status==="Rejected"&&<div style={{marginTop:8,color:MT,fontSize:12}}>Don't give up — keep applying! 💪</div>}
-                      {app.status==="Interviewing"&&<div style={{marginTop:8,background:`${G}0F`,border:`1px solid ${G}33`,borderRadius:8,padding:"10px 12px",fontSize:12,color:"#CCC"}}>🎯 Interview in progress — prepare well!</div>}
-                      {app.status==="Referred"&&<div style={{marginTop:8,background:"#0A0A1F",border:"1px solid #A78BFA44",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#A78BFA",fontWeight:600}}>🚀 Referred internally — waiting for HR to process</div>}
+
+                  {/* Expanded section */}
+                  {isOpen&&(
+                    <div style={{background:S2}}>
+                      {/* Application details */}
+                      <div style={{padding:"8px 16px 12px",borderTop:`1px solid ${BR}`,display:"flex",gap:20,flexWrap:"wrap"}}>
+                        <div style={{fontSize:12,color:MT}}>Applied: <strong style={{color:"#AAA"}}>{app.appliedAt?.toDate?.()?.toLocaleDateString()||"Recently"}</strong></div>
+                        {app.employeeName&&<div style={{fontSize:12,color:MT}}>Referred by: <strong style={{color:"#AAA"}}>{app.employeeName}</strong></div>}
+                      </div>
+
+                      {/* Status info */}
+                      {app.status==="Referred"&&(
+                        <div style={{margin:"0 16px 12px",background:"#0A0A1F",border:"1px solid #A78BFA44",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#A78BFA",fontWeight:600}}>
+                          🚀 Referred internally — employee has submitted your profile to HR. Use comments below to stay updated.
+                        </div>
+                      )}
+                      {app.status==="Interviewing"&&(
+                        <div style={{margin:"0 16px 12px",background:`${G}0F`,border:`1px solid ${G}33`,borderRadius:8,padding:"10px 12px",fontSize:12,color:"#CCC"}}>
+                          🎯 Interview in progress — update the employee with your progress below.
+                        </div>
+                      )}
+                      {app.status==="Rejected"&&(
+                        <div style={{margin:"0 16px 12px",background:"#1A0A0A",border:"1px solid #EF444433",borderRadius:8,padding:"10px 12px",fontSize:12,color:MT}}>
+                          Don't give up — keep applying! 💪
+                        </div>
+                      )}
+
+                      {/* COMMENT THREAD */}
+                      <CommentThread
+                        appId={app.id}
+                        currentUser={user}
+                        role="candidate"
+                      />
                     </div>
                   )}
                 </div>
               );
             })}
+
             {apps.length>0&&(
               <button onClick={()=>nav("/browse")} style={{background:`${G}15`,border:`1px solid ${G}33`,color:G,padding:"12px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%",marginTop:4}}>
                 + Apply to More Referrals
@@ -277,9 +465,8 @@ export default function Dashboard(){
               <div style={{textAlign:"center",padding:"60px 0",color:MT}}>
                 <div style={{fontSize:40,marginBottom:12}}>📝</div>
                 <div style={{color:WT,fontSize:16,marginBottom:8}}>No referral posts yet</div>
-                <div style={{fontSize:13,marginBottom:8}}>Post your company's open roles and help candidates get referred.</div>
                 <div style={{background:`${G}08`,border:`1px solid ${G}22`,borderRadius:10,padding:"12px 16px",marginBottom:20,fontSize:12,color:MT,lineHeight:1.7,maxWidth:400,margin:"0 auto 20px"}}>
-                  💡 Your company already has a referral programme. RaYa helps you find the right candidate faster so your referral succeeds and you earn your company's reward.
+                  💡 Your company already has a referral programme. RaYa helps you find the right candidate faster so your referral succeeds.
                 </div>
                 <button onClick={()=>setTab("postreferral")} style={{background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"12px 24px",borderRadius:8,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Post Your First Referral →</button>
               </div>
@@ -310,7 +497,7 @@ export default function Dashboard(){
                       View Applicants →
                     </button>
                   ):(
-                    <div style={{background:"#1A0A0A",border:"1px solid #EF444433",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#EF4444",fontWeight:600,textAlign:"center"}}>
+                    <div style={{background:"#1A0A0A",border:"1px solid #EF444433",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#EF4444",textAlign:"center"}}>
                       This post has expired and is no longer visible to job seekers.
                     </div>
                   )}
@@ -323,38 +510,80 @@ export default function Dashboard(){
         {/* ── APPLICANTS VIEW ── */}
         {tab==="myreferrals"&&selectedPost&&(
           <div>
-            <button onClick={()=>setSelectedPost(null)} style={{background:"none",border:"none",color:MT,cursor:"pointer",fontSize:13,marginBottom:14,fontFamily:"inherit"}}>← Back to Posts</button>
+            <button onClick={()=>{setSelectedPost(null);setExpandedApp(null);}} style={{background:"none",border:"none",color:MT,cursor:"pointer",fontSize:13,marginBottom:14,fontFamily:"inherit"}}>← Back to Posts</button>
             <div style={{background:S1,border:`1px solid ${BR}`,borderRadius:12,padding:16,marginBottom:14}}>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:WT}}>{selectedPost.role}</div>
               <div style={{color:MT,fontSize:13,marginTop:4}}>{selectedPost.company}</div>
             </div>
+
+            {/* Info box */}
+            <div style={{background:`${G}08`,border:`1px solid ${G}22`,borderRadius:10,padding:"10px 14px",marginBottom:14,display:"flex",gap:8,fontSize:12,color:MT,lineHeight:1.6}}>
+              <span style={{fontSize:14,flexShrink:0}}>💬</span>
+              <span>Click any applicant to <strong style={{color:G}}>view their updates and send messages</strong> directly to them.</span>
+            </div>
+
             <div style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"3px",marginBottom:12}}>APPLICANTS</div>
+
             {loadingApps?<Loader text="Loading applicants..."/>:applicants.length===0?(
               <div style={{textAlign:"center",padding:"40px 0",color:MT}}>
                 <div style={{fontSize:32,marginBottom:10}}>👥</div>
                 <div style={{color:WT,fontSize:15}}>No applicants yet</div>
-                <div style={{fontSize:13,marginTop:4}}>Share RaYa Jobs to get applications</div>
               </div>
             ):applicants.map(app=>{
               const cfg=ST[app.status]||ST["Applied"];
+              const isOpen=expandedApp===app.id;
               return(
-                <div key={app.id} style={{background:S1,border:`1px solid ${BR}`,borderRadius:12,padding:16,marginBottom:10}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-                    <div>
-                      <div style={{fontWeight:700,fontSize:14,color:WT}}>{app.candidateName||"Candidate"}</div>
-                      <div style={{color:MT,fontSize:12,marginTop:2}}>Applied {app.appliedAt?.toDate?.()?.toLocaleDateString()||"Recently"}</div>
+                <div key={app.id} style={{background:S1,border:`1px solid ${isOpen?G+"55":BR}`,borderRadius:12,marginBottom:10,overflow:"hidden",transition:"border-color 0.2s"}}>
+                  {/* Applicant header */}
+                  <div style={{padding:16,cursor:"pointer"}} onClick={()=>setExpandedApp(isOpen?null:app.id)}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                      <div>
+                        <div style={{fontWeight:700,fontSize:14,color:WT}}>{app.candidateName||"Candidate"}</div>
+                        <div style={{color:MT,fontSize:12,marginTop:2}}>Applied {app.appliedAt?.toDate?.()?.toLocaleDateString()||"Recently"}</div>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <Badge color={cfg.color}>{cfg.icon} {app.status}</Badge>
+                        <span style={{color:MT,fontSize:14}}>{isOpen?"▲":"▼"}</span>
+                      </div>
                     </div>
-                    <Badge color={cfg.color}>{cfg.icon} {app.status}</Badge>
+
+                    {/* Action buttons — always visible */}
+                    {app.status!=="Referred"&&app.status!=="Hired"&&(
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}} onClick={e=>e.stopPropagation()}>
+                        {[
+                          {l:"✓ Shortlist",a:"Shortlisted",c:G,bg:`${G}15`,b:`${G}33`},
+                          {l:"🚀 Refer",a:"Referred",c:"#A78BFA",bg:"#A78BFA15",b:"#A78BFA33"},
+                          {l:"✕ Reject",a:"Rejected",c:"#EF4444",bg:"#EF444415",b:"#EF444433"},
+                        ].map(btn=>(
+                          <button key={btn.a} onClick={()=>updateAppStatus(app.id,btn.a)}
+                            style={{background:btn.bg,border:`1px solid ${btn.b}`,color:btn.c,padding:"9px 6px",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                            {btn.l}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {app.status==="Referred"&&(
+                      <div style={{background:"#0A0A1F",border:"1px solid #A78BFA44",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#A78BFA",fontWeight:600}}>
+                        🚀 Referred — your company's HR team will take it from here.
+                      </div>
+                    )}
+                    {app.status==="Hired"&&(
+                      <div style={{background:`${G}10`,border:`1px solid ${G}33`,borderRadius:8,padding:"10px 12px",fontSize:12,color:G,fontWeight:600}}>
+                        🏆 Hired! Check with HR about your referral reward.
+                      </div>
+                    )}
                   </div>
-                  {app.status!=="Referred"&&app.status!=="Hired"&&(
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                      {[{l:"✓ Shortlist",a:"Shortlisted",c:G,bg:`${G}15`,b:`${G}33`},{l:"🚀 Refer",a:"Referred",c:"#A78BFA",bg:"#A78BFA15",b:"#A78BFA33"},{l:"✕ Reject",a:"Rejected",c:"#EF4444",bg:"#EF444415",b:"#EF444433"}].map(btn=>(
-                        <button key={btn.a} onClick={()=>updateAppStatus(app.id,btn.a)} style={{background:btn.bg,border:`1px solid ${btn.b}`,color:btn.c,padding:"9px 6px",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{btn.l}</button>
-                      ))}
+
+                  {/* COMMENT THREAD — expanded */}
+                  {isOpen&&(
+                    <div style={{background:S2}}>
+                      <CommentThread
+                        appId={app.id}
+                        currentUser={user}
+                        role="employee"
+                      />
                     </div>
                   )}
-                  {app.status==="Referred"&&<div style={{background:"#0A0A1F",border:"1px solid #A78BFA44",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#A78BFA",fontWeight:600}}>🚀 Referred internally — your company's HR team will take it from here.</div>}
-                  {app.status==="Hired"&&<div style={{background:`${G}10`,border:`1px solid ${G}33`,borderRadius:8,padding:"10px 12px",fontSize:12,color:G,fontWeight:600}}>🏆 Hired! Check with your HR team about your referral reward.</div>}
                 </div>
               );
             })}
@@ -366,18 +595,14 @@ export default function Dashboard(){
           <div style={{background:S1,border:`1px solid ${BR}`,borderRadius:16,padding:28}}>
             <h2 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,fontWeight:700,color:WT,marginBottom:4}}>Post a Referral</h2>
             <p style={{color:MT,fontSize:13,marginBottom:16}}>Help someone get hired through your company's referral programme.</p>
-
-            {/* Clarity box — why post */}
             <div style={{background:`${G}08`,border:`1px solid ${G}22`,borderRadius:10,padding:"12px 14px",marginBottom:20,display:"flex",gap:10,alignItems:"flex-start"}}>
               <span style={{fontSize:18,flexShrink:0}}>💡</span>
               <div>
                 <div style={{color:G,fontWeight:700,fontSize:13,marginBottom:4}}>Why post on RaYa?</div>
-                <div style={{color:MT,fontSize:12,lineHeight:1.7}}>Your company already rewards you when someone you refer gets hired. RaYa helps you find the right candidate faster — so your referral actually succeeds. Better candidates = better chance of your referral getting accepted by HR.</div>
+                <div style={{color:MT,fontSize:12,lineHeight:1.7}}>Your company already rewards you when someone you refer gets hired. RaYa helps you find the right candidate faster — so your referral actually succeeds.</div>
               </div>
             </div>
-
             {postError&&<div style={{background:"#1A0A0A",border:"1px solid #EF444444",borderRadius:8,padding:"10px 14px",color:"#EF4444",fontSize:13,marginBottom:16}}>{postError}</div>}
-
             <div style={{display:"grid",gap:16}}>
               <Inp label="Your Company *" placeholder="Amazon, Cognizant, TCS…" value={j.company} onChange={e=>sj("company",e.target.value)}/>
               <Inp label="Job Title *" placeholder="Senior Java Developer" value={j.role} onChange={e=>sj("role",e.target.value)}/>
@@ -407,7 +632,6 @@ export default function Dashboard(){
                   style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"12px 14px",color:WT,fontSize:14,outline:"none",fontFamily:"inherit",resize:"vertical"}}/>
               </div>
             </div>
-
             <button onClick={handlePostReferral} disabled={posting}
               style={{marginTop:20,width:"100%",background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:BG,padding:"13px",borderRadius:8,fontSize:14,fontWeight:700,cursor:posting?"not-allowed":"pointer",fontFamily:"inherit",opacity:posting?0.7:1}}>
               {posting?"Posting...":"Post Referral ✦"}
