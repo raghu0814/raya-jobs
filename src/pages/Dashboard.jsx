@@ -264,13 +264,21 @@ export default function Dashboard(){
         setApps(aSnap.docs.map(d=>({id:d.id,...d.data()})));
         const posts=pSnap.docs.map(d=>({id:d.id,...d.data()}));
         const today=new Date();
-        for(const p of posts){
+
+        // Fetch application count for each post
+        const postsWithCounts=await Promise.all(posts.map(async(p)=>{
           if(p.lastDate&&new Date(p.lastDate)<today&&p.status==="Active"){
             await updateDoc(doc(db,"referralPosts",p.id),{status:"Closed"});
             p.status="Closed";
           }
-        }
-        setMyPosts(posts);
+          try{
+            const appSnap=await getDocs(query(collection(db,"applications"),where("referralPostId","==",p.id)));
+            return {...p, appCount: appSnap.size};
+          }catch{
+            return {...p, appCount: 0};
+          }
+        }));
+        setMyPosts(postsWithCounts);
       }catch(e){console.error(e);}
       finally{setLoading(false);}
     };
@@ -282,7 +290,10 @@ export default function Dashboard(){
     try{
       const q=query(collection(db,"applications"),where("referralPostId","==",post.id));
       const snap=await getDocs(q);
-      setApplicants(snap.docs.map(d=>({id:d.id,...d.data()})));
+      const apps=snap.docs.map(d=>({id:d.id,...d.data()}));
+      setApplicants(apps);
+      // Update count on the post card
+      setMyPosts(p=>p.map(x=>x.id===post.id?{...x,appCount:apps.length}:x));
     }catch(e){console.error(e);}
     finally{setLoadingApps(false);}
   };
@@ -476,7 +487,7 @@ export default function Dashboard(){
               return(
                 <div key={post.id} style={{background:S1,border:`1px solid ${expired?"#EF444422":BR}`,borderRadius:14,padding:18,marginBottom:12,opacity:expired?0.7:1}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-                    <div>
+                    <div style={{flex:1,minWidth:0}}>
                       <div style={{fontWeight:700,fontSize:15,color:WT,marginBottom:6}}>{post.role}</div>
                       <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                         <Badge color={expired?"#EF4444":"#4ADE80"}>{expired?"Closed":post.status||"Active"}</Badge>
@@ -484,9 +495,16 @@ export default function Dashboard(){
                         <Badge color={MT}>{post.company}</Badge>
                       </div>
                     </div>
-                    <div style={{textAlign:"right"}}>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:G,lineHeight:1}}>{post.slots||2}</div>
-                      <div style={{color:MT,fontSize:11}}>slots</div>
+                    {/* Slots + Applications count */}
+                    <div style={{display:"flex",gap:10,flexShrink:0,marginLeft:10}}>
+                      <div style={{textAlign:"center",background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"8px 12px"}}>
+                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:G,lineHeight:1}}>{post.slots||2}</div>
+                        <div style={{color:MT,fontSize:10,marginTop:2}}>slots</div>
+                      </div>
+                      <div style={{textAlign:"center",background:post.appCount>0?`${G}10`:S2,border:`1px solid ${post.appCount>0?G+"33":BR}`,borderRadius:8,padding:"8px 12px"}}>
+                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:post.appCount>0?G:MT,lineHeight:1}}>{post.appCount||0}</div>
+                        <div style={{color:MT,fontSize:10,marginTop:2}}>applied</div>
+                      </div>
                     </div>
                   </div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
