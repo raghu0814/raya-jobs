@@ -244,6 +244,55 @@ export default function Dashboard(){
     finally{setPosting(false);}
   };
 
+  // ── EDIT POST ─────────────────────────────────────────
+  const[editPost,setEditPost]=useState(null);
+  const[editForm,setEditForm]=useState({});
+  const[editSkills,setEditSkills]=useState([]);
+  const[editSaving,setEditSaving]=useState(false);
+  const[editError,setEditError]=useState("");
+
+  const openEdit=(post)=>{
+    setEditForm({
+      role:post.role||"",
+      company:post.company||"",
+      expMin:post.expMin||"",
+      expMax:post.expMax||"",
+      ctcMin:post.ctcMin||"",
+      ctcMax:post.ctcMax||"",
+      slots:post.slots||2,
+      lastDate:post.lastDate||"",
+      desc:post.description||""
+    });
+    setEditSkills(post.skills||[]);
+    setEditPost(post);
+    setEditError("");
+  };
+
+  const handleSaveEdit=async()=>{
+    if(!editForm.role||!editForm.company){setEditError("Company and role are required");return;}
+    if(!editForm.lastDate){setEditError("Please set a last date");return;}
+    if(new Date(editForm.lastDate)<new Date()){setEditError("Last date must be in the future");return;}
+    setEditSaving(true);setEditError("");
+    try{
+      await updateDoc(doc(db,"referralPosts",editPost.id),{
+        role:editForm.role,
+        company:editForm.company,
+        skills:editSkills,
+        expMin:Number(editForm.expMin)||0,
+        expMax:Number(editForm.expMax)||0,
+        ctcMin:Number(editForm.ctcMin)||0,
+        ctcMax:Number(editForm.ctcMax)||0,
+        slots:Number(editForm.slots)||2,
+        lastDate:editForm.lastDate,
+        description:editForm.desc,
+      });
+      // Update local state
+      setMyPosts(p=>p.map(x=>x.id===editPost.id?{...x,...editForm,skills:editSkills,slots:Number(editForm.slots)||2}:x));
+      setEditPost(null);
+    }catch(e){setEditError("Failed to save. Try again.");}
+    finally{setEditSaving(false);}
+  };
+
   // ── RESUME MANAGEMENT ─────────────────────────────────
   const handleResumeUpload=async(file)=>{
     if(!file) return;
@@ -441,9 +490,14 @@ export default function Dashboard(){
                       {(post.skills||[]).map(s=><span key={s} style={{background:BG,border:`1px solid ${BORDER}`,color:MUTED,padding:"3px 10px",borderRadius:100,fontSize:11,fontWeight:500}}>{s}</span>)}
                     </div>
                     {!expired?(
-                      <button onClick={()=>loadApplicants(post)} style={{width:"100%",background:GREENBG,border:"1px solid #BBF7D0",color:"#15803D",padding:"10px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                        View Applicants →
-                      </button>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:8}}>
+                        <button onClick={()=>loadApplicants(post)} style={{background:GREENBG,border:"1px solid #BBF7D0",color:"#15803D",padding:"10px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                          View Applicants →
+                        </button>
+                        <button onClick={()=>openEdit(post)} style={{background:WHITE,border:`1.5px solid ${BORDER}`,color:PRIMARY,padding:"10px 16px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                          ✏️ Edit
+                        </button>
+                      </div>
                     ):(
                       <div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:9,padding:"10px",fontSize:13,color:"#DC2626",textAlign:"center"}}>
                         This post has expired and is no longer visible to job seekers.
@@ -672,6 +726,85 @@ export default function Dashboard(){
           </div>
         )}
       </div>
+
+      {/* EDIT POST MODAL */}
+      {editPost&&(
+        <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,0.6)",backdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}
+          onClick={e=>e.target===e.currentTarget&&setEditPost(null)}>
+          <div style={{background:WHITE,borderRadius:20,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+            <div style={{padding:"20px 24px 16px",borderBottom:`1px solid ${BORDER}`,display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,background:WHITE,zIndex:10}}>
+              <div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY}}>Edit Referral Post</div>
+                <div style={{color:MUTED,fontSize:13,marginTop:2}}>{editPost.company} — {editPost.role}</div>
+              </div>
+              <button onClick={()=>setEditPost(null)} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:MUTED}}>✕</button>
+            </div>
+            <div style={{padding:"20px 24px"}}>
+              {editError&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",color:"#DC2626",fontSize:13,marginBottom:16}}>{editError}</div>}
+              <div style={{display:"grid",gap:16}}>
+                <Inp label="Company *" placeholder="Amazon, Cognizant…" value={editForm.company||""} onChange={e=>setEditForm(p=>({...p,company:e.target.value}))}/>
+                <Inp label="Job Title *" placeholder="Senior Java Developer" value={editForm.role||""} onChange={e=>setEditForm(p=>({...p,role:e.target.value}))}/>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <label style={{fontSize:11,fontWeight:700,color:PRIMARY}}>Skills Required</label>
+                  {editSkills.length>0&&(
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {editSkills.map(s=>(
+                        <span key={s} onClick={()=>setEditSkills(p=>p.filter(x=>x!==s))}
+                          style={{background:GREENBG,border:"1px solid #BBF7D0",color:"#15803D",padding:"4px 10px",borderRadius:100,fontSize:12,cursor:"pointer",fontWeight:500}}>{s} ✕</span>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{display:"flex",gap:8}}>
+                    <input id="editSkillInput" placeholder="Type skill and press Enter…"
+                      onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){const v=e.target.value.trim();if(!editSkills.includes(v))setEditSkills(p=>[...p,v]);e.target.value="";}}}
+                      style={{flex:1,background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"10px 14px",color:TEXT,fontSize:13,outline:"none",fontFamily:"inherit"}}
+                      onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
+                    <button onClick={()=>{const inp=document.getElementById("editSkillInput");const v=inp.value.trim();if(v&&!editSkills.includes(v)){setEditSkills(p=>[...p,v]);inp.value="";}}}
+                      style={{background:GREEN,border:"none",color:WHITE,padding:"10px 16px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Add</button>
+                  </div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                    {allSkills.filter(s=>!editSkills.includes(s)).slice(0,24).map(s=>(
+                      <span key={s} onClick={()=>setEditSkills(p=>[...p,s])}
+                        style={{background:BG,border:`1px solid ${BORDER}`,color:MUTED,padding:"3px 10px",borderRadius:100,fontSize:11,cursor:"pointer",fontWeight:500}}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  <Inp label="Min Exp (yrs)" placeholder="3" value={editForm.expMin||""} onChange={e=>setEditForm(p=>({...p,expMin:e.target.value}))}/>
+                  <Inp label="Max Exp (yrs)" placeholder="7" value={editForm.expMax||""} onChange={e=>setEditForm(p=>({...p,expMax:e.target.value}))}/>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  <Inp label="CTC Min (LPA)" placeholder="8" value={editForm.ctcMin||""} onChange={e=>setEditForm(p=>({...p,ctcMin:e.target.value}))}/>
+                  <Inp label="CTC Max (LPA)" placeholder="14" value={editForm.ctcMax||""} onChange={e=>setEditForm(p=>({...p,ctcMax:e.target.value}))}/>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  <Inp label="Referral Slots" placeholder="2" value={editForm.slots||""} onChange={e=>setEditForm(p=>({...p,slots:e.target.value}))}/>
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    <label style={{fontSize:11,fontWeight:700,color:PRIMARY}}>Last Date *</label>
+                    <input type="date" value={editForm.lastDate||""} onChange={e=>setEditForm(p=>({...p,lastDate:e.target.value}))}
+                      min={new Date().toISOString().split("T")[0]}
+                      style={{background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"11px 14px",color:TEXT,fontSize:14,outline:"none",fontFamily:"inherit"}}
+                      onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
+                  </div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  <label style={{fontSize:11,fontWeight:700,color:PRIMARY}}>Job Description</label>
+                  <textarea placeholder="Describe the role…" value={editForm.desc||""} onChange={e=>setEditForm(p=>({...p,desc:e.target.value}))} rows={3}
+                    style={{background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"11px 14px",color:TEXT,fontSize:14,outline:"none",fontFamily:"inherit",resize:"vertical"}}
+                    onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
+                </div>
+              </div>
+            </div>
+            <div style={{padding:"16px 24px",borderTop:`1px solid ${BORDER}`,display:"flex",gap:10,position:"sticky",bottom:0,background:WHITE}}>
+              <button onClick={()=>setEditPost(null)} style={{flex:1,background:"none",border:`1.5px solid ${BORDER}`,color:MUTED,padding:"12px",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+              <button onClick={handleSaveEdit} disabled={editSaving}
+                style={{flex:2,background:GREEN,border:"none",color:WHITE,padding:"12px",borderRadius:10,fontSize:14,fontWeight:700,cursor:editSaving?"not-allowed":"pointer",fontFamily:"inherit",opacity:editSaving?0.7:1}}>
+                {editSaving?"Saving...":"Save Changes ✓"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
