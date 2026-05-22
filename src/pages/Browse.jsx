@@ -5,15 +5,13 @@ import { db, auth } from "../firebase/config";
 import Loader from "../components/Loader";
 import Badge from "../components/Badge";
 
-const G="#C9A84C",GL="#E8C96A",BG="#080808",S1="#0F0F0F",S2="#161616",S3="#1E1E1E",BR="#2A2A2A",MT="#666666",WT="#F0EDE6";
+const PRIMARY="#1A2E4A",GREEN="#22C55E",BG="#F8FAFC",WHITE="#FFFFFF",BORDER="#E2E8F0",TEXT="#0F172A",MUTED="#64748B",GREENBG="#F0FDF4";
 
 function groupPosts(posts){
   const map={};
   for(const post of posts){
     const key=`${post.company}__${(post.role||"").toLowerCase().trim()}`;
-    if(!map[key]){
-      map[key]={key,company:post.company,role:post.role,skills:post.skills||[],ctcMin:post.ctcMin,ctcMax:post.ctcMax,expMin:post.expMin,expMax:post.expMax,city:post.city||"India",posts:[],totalSlots:0};
-    }
+    if(!map[key]) map[key]={key,company:post.company,role:post.role,skills:post.skills||[],ctcMin:post.ctcMin,ctcMax:post.ctcMax,expMin:post.expMin,expMax:post.expMax,city:post.city||"India",posts:[],totalSlots:0};
     map[key].posts.push(post);
     map[key].totalSlots+=(post.slots||1);
     map[key].ctcMin=Math.min(map[key].ctcMin||post.ctcMin||0,post.ctcMin||0);
@@ -47,8 +45,7 @@ export default function Browse(){
         setGroups(groupPosts(posts));
         if(auth.currentUser){
           const aSnap=await getDocs(query(collection(db,"applications"),where("candidateId","==",auth.currentUser.uid)));
-          const keys=new Set(aSnap.docs.map(d=>`${d.data().company}__${(d.data().role||"").toLowerCase().trim()}`));
-          setAppliedKeys(keys);
+          setAppliedKeys(new Set(aSnap.docs.map(d=>`${d.data().company}__${(d.data().role||"").toLowerCase().trim()}`)));
         }
       }catch(e){console.error(e);}
       finally{setLoading(false);}
@@ -64,14 +61,10 @@ export default function Browse(){
       await addDoc(collection(db,"applications"),{
         candidateId:auth.currentUser.uid,
         candidateName:auth.currentUser.displayName,
-        referralPostId:best.id,
-        company:group.company,role:group.role,
-        employeeId:best.employeeId,
-        employeeName:best.employeeName,
-        status:"Applied",
-        appliedAt:serverTimestamp(),
-        responseDeadline:new Date(Date.now()+7*24*60*60*1000),
-        routedBy:"smart-match"
+        referralPostId:best.id,company:group.company,role:group.role,
+        employeeId:best.employeeId,employeeName:best.employeeName,
+        status:"Applied",appliedAt:serverTimestamp(),
+        responseDeadline:new Date(Date.now()+7*24*60*60*1000),routedBy:"smart-match"
       });
       const key=`${group.company}__${(group.role||"").toLowerCase().trim()}`;
       setAppliedKeys(prev=>new Set([...prev,key]));
@@ -80,117 +73,117 @@ export default function Browse(){
     finally{setApplying(false);}
   };
 
-  const companies=["All",...new Set(groups.map(g=>g.company)).values()];
-  const allSkills=["All Skills",...new Set(groups.flatMap(g=>g.skills)).values()].sort();
+  const companies=["All",...new Set(groups.map(g=>g.company))];
+  const allSkillsFilter=["All Skills",...new Set(groups.flatMap(g=>g.skills)).values()].sort();
   const filtered=groups.filter(g=>{
     const mCo=company==="All"||g.company===company;
     const mSk=skill==="All Skills"||g.skills.includes(skill);
     const mSe=search===""||g.role.toLowerCase().includes(search.toLowerCase())||g.company.toLowerCase().includes(search.toLowerCase())||g.skills.some(s=>s.toLowerCase().includes(search.toLowerCase()));
     return mCo&&mSk&&mSe;
   });
-
   const isApplied=g=>appliedKeys.has(`${g.company}__${(g.role||"").toLowerCase().trim()}`);
 
   if(loading) return <Loader text="Loading referrals..."/>;
 
   return(
-    <div style={{background:BG,minHeight:"100vh",color:WT,fontFamily:"'DM Sans',sans-serif"}}>
+    <div style={{background:BG,minHeight:"100vh",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
       {/* NAV */}
-      <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(8,8,8,0.96)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BR}`,padding:"0 20px",height:60,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <button onClick={()=>nav("/")} style={{background:"none",border:"none",color:MT,cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>← Home</button>
-        <span style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:700,fontSize:18,background:`linear-gradient(135deg,${G},${GL})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>RaYa Jobs</span>
-        <button onClick={()=>nav(auth.currentUser?"/dashboard":"/login")} style={{background:`${G}15`,border:`1px solid ${G}33`,color:G,padding:"5px 12px",borderRadius:6,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-          {auth.currentUser?"Dashboard":"Login"}
+      <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(255,255,255,0.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"0 clamp(16px,4vw,32px)",height:64,display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+        <button onClick={()=>nav("/")} style={{background:"none",border:`1px solid ${BORDER}`,color:MUTED,cursor:"pointer",fontSize:13,fontFamily:"inherit",padding:"6px 14px",borderRadius:8,fontWeight:500}}>← Home</button>
+        <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>nav("/")}>
+          <div style={{width:30,height:30,borderRadius:8,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🤝</div>
+          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,color:PRIMARY}}>RaYa Jobs</span>
+        </div>
+        <button onClick={()=>nav(auth.currentUser?"/dashboard":"/login")} style={{background:GREEN,border:"none",color:WHITE,padding:"8px 18px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+          {auth.currentUser?"Dashboard →":"Login"}
         </button>
       </nav>
 
-      {/* SEARCH + FILTERS */}
-      <div style={{background:S1,borderBottom:`1px solid ${BR}`,padding:"12px 20px",position:"sticky",top:60,zIndex:90}}>
-        <div style={{position:"relative",marginBottom:10}}>
-          <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:MT}}>🔍</span>
+      {/* SEARCH */}
+      <div style={{background:WHITE,borderBottom:`1px solid ${BORDER}`,padding:"14px clamp(16px,4vw,32px)",position:"sticky",top:64,zIndex:90,boxShadow:"0 1px 3px rgba(0,0,0,0.03)"}}>
+        <div style={{position:"relative",marginBottom:12}}>
+          <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:MUTED,fontSize:16}}>🔍</span>
           <input placeholder="Search role, company or skill…" value={search} onChange={e=>setSearch(e.target.value)}
-            style={{width:"100%",background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"11px 14px 11px 38px",color:WT,fontSize:14,outline:"none",fontFamily:"inherit"}}
-            onFocus={e=>e.target.style.borderColor=G} onBlur={e=>e.target.style.borderColor=BR}/>
+            style={{width:"100%",background:BG,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"11px 14px 11px 42px",color:TEXT,fontSize:14,outline:"none",fontFamily:"inherit"}}
+            onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
         </div>
-        <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4}}>
+        <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:2}}>
           <select value={company} onChange={e=>setCompany(e.target.value)}
-            style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"7px 12px",color:WT,fontSize:12,outline:"none",fontFamily:"inherit",appearance:"none",cursor:"pointer",flexShrink:0}}>
-            {companies.map(c=><option key={c} value={c} style={{background:S2}}>{c}</option>)}
+            style={{background:BG,border:`1.5px solid ${BORDER}`,borderRadius:9,padding:"7px 14px",color:TEXT,fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer",flexShrink:0,fontWeight:500}}>
+            {companies.map(c=><option key={c} value={c}>{c}</option>)}
           </select>
           <select value={skill} onChange={e=>setSkill(e.target.value)}
-            style={{background:S2,border:`1px solid ${BR}`,borderRadius:8,padding:"7px 12px",color:WT,fontSize:12,outline:"none",fontFamily:"inherit",appearance:"none",cursor:"pointer",flexShrink:0}}>
-            {allSkills.map(s=><option key={s} value={s} style={{background:S2}}>{s}</option>)}
+            style={{background:BG,border:`1.5px solid ${BORDER}`,borderRadius:9,padding:"7px 14px",color:TEXT,fontSize:13,outline:"none",fontFamily:"inherit",cursor:"pointer",flexShrink:0,fontWeight:500}}>
+            {allSkillsFilter.map(s=><option key={s} value={s}>{s}</option>)}
           </select>
         </div>
-        <div style={{marginTop:8,fontSize:12,color:MT}}>
-          <span style={{color:G,fontWeight:700}}>{filtered.length}</span> roles found
-          {appliedKeys.size>0&&<span style={{marginLeft:10,color:"#4ADE80"}}>• {appliedKeys.size} applied</span>}
+        <div style={{marginTop:10,fontSize:13,color:MUTED}}>
+          <span style={{color:PRIMARY,fontWeight:700}}>{filtered.length}</span> roles found
+          {appliedKeys.size>0&&<span style={{marginLeft:12,color:GREEN,fontWeight:600}}>✓ {appliedKeys.size} applied</span>}
         </div>
       </div>
 
       {/* SMART ROUTING BANNER */}
-      <div style={{background:`${G}08`,borderBottom:`1px solid ${G}22`,padding:"10px 20px",display:"flex",alignItems:"center",gap:10}}>
+      <div style={{background:GREENBG,borderBottom:"1px solid #BBF7D0",padding:"10px clamp(16px,4vw,32px)",display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:16,flexShrink:0}}>⚡</span>
-        <p style={{fontSize:12,color:MT,lineHeight:1.5}}>
-          <strong style={{color:G}}>Smart Routing</strong> — When you apply, RaYa automatically connects you to the employee with the most referral slots. One application per company role.
+        <p style={{fontSize:13,color:"#15803D",lineHeight:1.5,fontWeight:500}}>
+          <strong>Smart Routing</strong> — One application per company role. Automatically routed to the employee with the most slots.
         </p>
       </div>
 
       {/* CARDS */}
-      <div style={{padding:"20px",maxWidth:1000,margin:"0 auto"}}>
+      <div style={{padding:"24px clamp(16px,4vw,32px)",maxWidth:1100,margin:"0 auto"}}>
         {filtered.length===0?(
-          <div style={{textAlign:"center",padding:"80px 0",color:MT}}>
-            <div style={{fontSize:40,marginBottom:12}}>🔍</div>
-            <div style={{fontSize:16,color:WT,marginBottom:8}}>No referrals found</div>
-            <div style={{fontSize:13}}>Try a different search or check back soon</div>
+          <div style={{textAlign:"center",padding:"80px 0",color:MUTED}}>
+            <div style={{fontSize:48,marginBottom:16}}>🔍</div>
+            <div style={{fontSize:18,color:TEXT,fontWeight:600,marginBottom:8}}>No referrals found</div>
+            <div style={{fontSize:14}}>Try a different search or check back soon</div>
           </div>
         ):(
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:16}}>
             {filtered.map(group=>{
               const applied=isApplied(group);
               const empCount=group.posts.length;
               return(
                 <div key={group.key} onClick={()=>{setSelected(group);setModalStep(1);}}
-                  style={{background:S1,border:`1px solid ${applied?G+"55":BR}`,borderRadius:14,padding:18,cursor:"pointer",transition:"border-color 0.2s,transform 0.2s"}}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor=applied?G+"88":G+"44";e.currentTarget.style.transform="translateY(-2px)";}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor=applied?G+"55":BR;e.currentTarget.style.transform="translateY(0)";}}>
+                  style={{background:WHITE,border:`1.5px solid ${applied?"#86EFAC":BORDER}`,borderRadius:16,padding:20,cursor:"pointer",transition:"all 0.2s",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}
+                  onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(0,0,0,0.1)";}}
+                  onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,0.04)";}}>
 
-                  {/* TOP */}
-                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
+                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:700,fontSize:15,color:WT,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:3}}>{group.role}</div>
-                      <div style={{color:MT,fontSize:12}}>{group.company} • {group.city}</div>
+                      <div style={{fontWeight:700,fontSize:15,color:TEXT,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:3}}>{group.role}</div>
+                      <div style={{color:MUTED,fontSize:13}}>{group.company} • {group.city}</div>
                     </div>
                     {applied
-                      ?<span style={{background:"#0A1F0A",border:"1px solid #1F5C1F",color:"#4ADE80",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:100,flexShrink:0}}>Applied ✓</span>
-                      :<Badge color="#60A5FA">Active</Badge>
+                      ?<span style={{background:GREENBG,border:"1px solid #86EFAC",color:"#15803D",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:100,flexShrink:0}}>Applied ✓</span>
+                      :<Badge color="#3B82F6">Active</Badge>
                     }
                   </div>
 
-                  {/* EMPLOYEE COUNT */}
-                  <div style={{background:`${G}10`,border:`1px solid ${G}22`,borderRadius:8,padding:"8px 12px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+                  {/* Employee count badge */}
+                  <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:8,padding:"8px 12px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
                     <span style={{fontSize:14}}>👥</span>
-                    <div>
-                      <span style={{color:G,fontWeight:700,fontSize:13}}>{empCount} employee{empCount>1?"s":""}</span>
-                      <span style={{color:MT,fontSize:12}}> willing to refer • </span>
-                      <span style={{color:G,fontWeight:700,fontSize:13}}>{group.totalSlots} slot{group.totalSlots>1?"s":""} available</span>
+                    <div style={{fontSize:13}}>
+                      <span style={{color:"#15803D",fontWeight:700}}>{empCount} employee{empCount>1?"s":""}</span>
+                      <span style={{color:MUTED}}> willing to refer • </span>
+                      <span style={{color:"#15803D",fontWeight:700}}>{group.totalSlots} slot{group.totalSlots>1?"s":""}</span>
                     </div>
                   </div>
 
-                  {/* SKILLS */}
-                  <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
-                    {group.skills.slice(0,4).map(s=><span key={s} style={{background:S3,border:`1px solid ${BR}`,color:"#AAA",padding:"3px 10px",borderRadius:100,fontSize:11}}>{s}</span>)}
-                    {group.skills.length>4&&<span style={{background:S3,border:`1px solid ${BR}`,color:MT,padding:"3px 10px",borderRadius:100,fontSize:11}}>+{group.skills.length-4}</span>}
+                  {/* Skills */}
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
+                    {group.skills.slice(0,4).map(s=><span key={s} style={{background:BG,border:`1px solid ${BORDER}`,color:MUTED,padding:"3px 10px",borderRadius:100,fontSize:11,fontWeight:500}}>{s}</span>)}
+                    {group.skills.length>4&&<span style={{background:BG,border:`1px solid ${BORDER}`,color:MUTED,padding:"3px 10px",borderRadius:100,fontSize:11}}>+{group.skills.length-4}</span>}
                   </div>
 
-                  {/* BOTTOM - no bonus */}
-                  <div style={{display:"flex",gap:16,paddingTop:10,borderTop:`1px solid ${BR}`}}>
-                    {group.ctcMax>0&&<div><div style={{color:MT,fontSize:9,marginBottom:2}}>SALARY</div><div style={{color:WT,fontWeight:700,fontSize:13}}>₹{group.ctcMin}–{group.ctcMax}L</div></div>}
-                    {group.expMax>0&&<div><div style={{color:MT,fontSize:9,marginBottom:2}}>EXP</div><div style={{color:WT,fontWeight:700,fontSize:13}}>{group.expMin}–{group.expMax} yrs</div></div>}
-                  </div>
-
-                  <div style={{marginTop:10,fontSize:11,color:MT,display:"flex",alignItems:"center",gap:4}}>
-                    <span style={{color:G}}>⚡</span> Smart routed to best available employee
+                  {/* Stats */}
+                  <div style={{display:"flex",gap:16,paddingTop:12,borderTop:`1px solid ${BORDER}`}}>
+                    {group.ctcMax>0&&<div><div style={{color:MUTED,fontSize:10,fontWeight:600,marginBottom:2}}>SALARY</div><div style={{color:TEXT,fontWeight:700,fontSize:13}}>₹{group.ctcMin}–{group.ctcMax}L</div></div>}
+                    {group.expMax>0&&<div><div style={{color:MUTED,fontSize:10,fontWeight:600,marginBottom:2}}>EXP</div><div style={{color:TEXT,fontWeight:700,fontSize:13}}>{group.expMin}–{group.expMax} yrs</div></div>}
+                    <div style={{marginLeft:"auto",fontSize:12,color:MUTED,display:"flex",alignItems:"center",gap:4}}>
+                      <span style={{color:GREEN}}>⚡</span> Smart routed
+                    </div>
                   </div>
                 </div>
               );
@@ -201,93 +194,70 @@ export default function Browse(){
 
       {/* APPLY MODAL */}
       {selected&&(
-        <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.88)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
+        <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,0.6)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
           onClick={e=>e.target===e.currentTarget&&setSelected(null)}>
-          <div style={{background:S1,border:`1px solid ${BR}`,borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,padding:"28px 24px 40px",maxHeight:"90vh",overflowY:"auto"}}>
-            <div style={{width:40,height:4,background:BR,borderRadius:2,margin:"0 auto 20px"}}/>
+          <div style={{background:WHITE,borderRadius:"24px 24px 0 0",width:"100%",maxWidth:500,padding:"28px 24px 40px",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 -4px 40px rgba(0,0,0,0.15)"}}>
+            <div style={{width:40,height:4,background:BORDER,borderRadius:2,margin:"0 auto 20px"}}/>
 
-            {/* STEP 1 */}
             {modalStep===1&&<>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}}>
                 <div>
-                  <div style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"2px",marginBottom:4}}>APPLY VIA REFERRAL</div>
-                  <h3 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:WT}}>{selected.role}</h3>
-                  <p style={{color:MT,fontSize:13,marginTop:4}}>{selected.company}</p>
+                  <div style={{fontSize:11,color:GREEN,fontWeight:700,letterSpacing:"1px",marginBottom:6}}>APPLY VIA REFERRAL</div>
+                  <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY}}>{selected.role}</h3>
+                  <p style={{color:MUTED,fontSize:13,marginTop:4}}>{selected.company}</p>
                 </div>
-                <button onClick={()=>setSelected(null)} style={{background:"none",border:"none",color:MT,cursor:"pointer",fontSize:20}}>✕</button>
+                <button onClick={()=>setSelected(null)} style={{background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:22}}>✕</button>
               </div>
-
-              <div style={{background:`${G}10`,border:`1px solid ${G}33`,borderRadius:10,padding:"12px 14px",marginBottom:16}}>
-                <div style={{color:G,fontWeight:700,fontSize:13,marginBottom:4}}>⚡ Smart Routing Active</div>
-                <div style={{color:MT,fontSize:12,lineHeight:1.6}}>
-                  <strong style={{color:WT}}>{selected.posts.length} employee{selected.posts.length>1?"s":""}</strong> from {selected.company} can refer you. Your profile goes to the one with the most available slots.
-                </div>
+              <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 14px",marginBottom:16}}>
+                <div style={{color:"#15803D",fontWeight:700,fontSize:13,marginBottom:4}}>⚡ Smart Routing Active</div>
+                <div style={{color:MUTED,fontSize:13,lineHeight:1.6}}><strong style={{color:TEXT}}>{selected.posts.length} employee{selected.posts.length>1?"s":""}</strong> from {selected.company} can refer you. We'll send your profile to the one with the most slots.</div>
               </div>
-
-              {[
-                ["Company",selected.company],
-                ["Role",selected.role],
-                ...(selected.ctcMax>0?[["CTC Range",`₹${selected.ctcMin}–${selected.ctcMax} LPA`]]:[]),
-                ...(selected.expMax>0?[["Experience",`${selected.expMin}–${selected.expMax} years`]]:[]),
-                ["Total Slots",`${selected.totalSlots} available`],
-              ].map(([k,v])=>(
-                <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${BR}`}}>
-                  <span style={{color:MT,fontSize:13}}>{k}</span>
-                  <span style={{color:WT,fontSize:13,fontWeight:600}}>{v}</span>
+              {[["Company",selected.company],["Role",selected.role],...(selected.ctcMax>0?[["CTC",`₹${selected.ctcMin}–${selected.ctcMax} LPA`]]:[]),...(selected.expMax>0?[["Experience",`${selected.expMin}–${selected.expMax} years`]]:[]),["Total Slots",`${selected.totalSlots} available`]].map(([k,v])=>(
+                <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${BORDER}`}}>
+                  <span style={{color:MUTED,fontSize:13}}>{k}</span>
+                  <span style={{color:TEXT,fontSize:13,fontWeight:600}}>{v}</span>
                 </div>
               ))}
-
-              <div style={{background:`${G}0A`,border:`1px solid ${G}22`,borderRadius:10,padding:"12px 14px",margin:"16px 0",fontSize:12,color:MT,lineHeight:1.7}}>
-                Referred candidates are <strong style={{color:WT}}>5x more likely</strong> to get an interview than direct applicants.
+              <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 14px",margin:"16px 0",fontSize:13,color:"#15803D",lineHeight:1.7}}>
+                Referred candidates are <strong>5x more likely</strong> to get an interview.
               </div>
-
               {isApplied(selected)
-                ?<div style={{background:"#0A1F0A",border:"1px solid #1F5C1F",borderRadius:10,padding:"14px",textAlign:"center",color:"#4ADE80",fontWeight:700}}>✓ Already Applied to this role at {selected.company}</div>
+                ?<div style={{background:GREENBG,border:"1px solid #86EFAC",borderRadius:10,padding:"14px",textAlign:"center",color:"#15803D",fontWeight:700}}>✓ Already Applied to this role at {selected.company}</div>
                 :<button onClick={()=>auth.currentUser?setModalStep(2):nav("/login")}
-                  style={{width:"100%",background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:"#080808",padding:"14px",borderRadius:8,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                  style={{width:"100%",background:GREEN,border:"none",color:WHITE,padding:"14px",borderRadius:10,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                   {auth.currentUser?"Apply Now ✦":"Login to Apply"}
                 </button>
               }
             </>}
 
-            {/* STEP 2 */}
             {modalStep===2&&<>
               <div style={{textAlign:"center",marginBottom:20}}>
-                <div style={{fontSize:10,color:G,fontWeight:700,letterSpacing:"2px",marginBottom:8}}>CONFIRM APPLICATION</div>
-                <h3 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:WT,marginBottom:6}}>Apply via Smart Routing</h3>
-                <p style={{color:MT,fontSize:13}}>Your profile goes to the best matched employee at {selected.company}</p>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY,marginBottom:6}}>Confirm Application</h3>
+                <p style={{color:MUTED,fontSize:13}}>Your profile goes to the best matched employee at {selected.company}</p>
               </div>
-              <div style={{background:`${G}0A`,border:`1px solid ${G}22`,borderRadius:12,padding:20,marginBottom:20,textAlign:"center"}}>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:40,fontWeight:700,color:G}}>₹799</div>
-                <div style={{color:MT,fontSize:13,marginTop:4}}>3-month unlimited plan</div>
-                <div style={{color:MT,fontSize:11,marginTop:4}}>Unlimited applications • One per company role</div>
+              <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:12,padding:20,marginBottom:20,textAlign:"center"}}>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:40,fontWeight:800,color:PRIMARY}}>₹799</div>
+                <div style={{color:MUTED,fontSize:13,marginTop:4}}>3-month unlimited plan</div>
               </div>
               <button onClick={()=>handleApply(selected)} disabled={applying}
-                style={{width:"100%",background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:"#080808",padding:"14px",borderRadius:8,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:10,opacity:applying?0.7:1}}>
+                style={{width:"100%",background:GREEN,border:"none",color:WHITE,padding:"14px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:10,opacity:applying?0.7:1}}>
                 {applying?"Applying...":"Pay ₹799 & Apply"}
               </button>
-              <button onClick={()=>setModalStep(1)} style={{width:"100%",background:"none",border:"none",color:MT,cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>← Go Back</button>
+              <button onClick={()=>setModalStep(1)} style={{width:"100%",background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>← Go Back</button>
             </>}
 
-            {/* STEP 3 */}
             {modalStep===3&&<>
               <div style={{textAlign:"center",padding:"20px 0"}}>
                 <div style={{fontSize:52,marginBottom:14}}>🎉</div>
-                <h3 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:WT,marginBottom:8}}>Application Sent!</h3>
-                <div style={{background:`${G}10`,border:`1px solid ${G}33`,borderRadius:10,padding:"14px 16px",margin:"16px 0",textAlign:"left"}}>
-                  <div style={{color:G,fontWeight:700,fontSize:13,marginBottom:6}}>⚡ Smart Routing Complete</div>
-                  <div style={{color:MT,fontSize:12,lineHeight:1.7}}>Your profile was sent to the best available employee at <strong style={{color:WT}}>{selected.company}</strong>. They will review and submit internally.</div>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:PRIMARY,marginBottom:8}}>Application Sent!</h3>
+                <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"14px 16px",margin:"16px 0",textAlign:"left"}}>
+                  <div style={{color:"#15803D",fontWeight:700,fontSize:13,marginBottom:6}}>⚡ Smart Routing Complete</div>
+                  <div style={{color:MUTED,fontSize:13,lineHeight:1.7}}>Your profile was sent to the best available employee at <strong style={{color:TEXT}}>{selected.company}</strong>.</div>
                 </div>
-                <p style={{color:G,fontSize:13,fontWeight:600,marginBottom:24}}>Guaranteed response within 7 days. ✦</p>
+                <p style={{color:GREEN,fontSize:13,fontWeight:600,marginBottom:24}}>Guaranteed response within 7 days. ✦</p>
                 <div style={{display:"grid",gap:10}}>
-                  <button onClick={()=>{setSelected(null);nav("/dashboard");}}
-                    style={{background:`linear-gradient(135deg,${G},${GL})`,border:"none",color:"#080808",padding:"12px",borderRadius:8,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                    Track Application →
-                  </button>
-                  <button onClick={()=>setSelected(null)}
-                    style={{background:"none",border:`1px solid ${BR}`,color:MT,padding:"12px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
-                    Browse More Roles
-                  </button>
+                  <button onClick={()=>{setSelected(null);nav("/dashboard");}} style={{background:GREEN,border:"none",color:WHITE,padding:"12px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Track Application →</button>
+                  <button onClick={()=>setSelected(null)} style={{background:"none",border:`1.5px solid ${BORDER}`,color:MUTED,padding:"12px",borderRadius:10,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Browse More Roles</button>
                 </div>
               </div>
             </>}

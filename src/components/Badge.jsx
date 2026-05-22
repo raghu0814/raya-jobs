@@ -1,4 +1,4 @@
-export default function Badge({ children, color = "#C9A84C" }) {
+export default function Badge({ children, color = "#22C55E" }) {
   return (
     <span style={{
       background: color + "18",
@@ -7,7 +7,8 @@ export default function Badge({ children, color = "#C9A84C" }) {
       fontSize: 11,
       fontWeight: 700,
       padding: "3px 10px",
-      borderRadius: 100
+      borderRadius: 100,
+      whiteSpace: "nowrap"
     }}>{children}</span>
   );
 }
