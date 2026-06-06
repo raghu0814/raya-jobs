@@ -81,6 +81,15 @@ function SkillSelector({skills,setSkills,exclude}){
   );
 }
 
+// ── PROGRESS BAR — defined outside to avoid render error ──
+const Prog=({step})=>(
+  <div style={{display:"flex",gap:8,marginBottom:28}}>
+    {[1,2,3].map(i=>(
+      <div key={i} style={{flex:1,height:4,borderRadius:2,background:i<step?"#86EFAC":i===step?GREEN:BORDER,transition:"background 0.3s"}}/>
+    ))}
+  </div>
+);
+
 export default function Register(){
   const nav=useNavigate();
   const[step,setStep]=useState(1);
@@ -103,7 +112,7 @@ export default function Register(){
       const snap=await getDocs(q);
       if(!snap.empty){setError("An account already exists with this PAN. One account per person only.");setLoading(false);return;}
       setStep(2);
-    }catch(e){setStep(2);}
+    }catch{setStep(2);}
     finally{setLoading(false);}
   };
 
@@ -138,21 +147,13 @@ export default function Register(){
     }finally{setLoading(false);}
   };
 
-  const Prog=()=>(
-    <div style={{display:"flex",gap:8,marginBottom:28}}>
-      {[1,2,3].map(i=>(
-        <div key={i} style={{flex:1,height:4,borderRadius:2,background:i<step?"#86EFAC":i===step?GREEN:BORDER,transition:"background 0.3s"}}/>
-      ))}
-    </div>
-  );
-
   const stepLabels=["Account Details","Professional Info","Skills & Resume"];
 
   return(
     <div style={{background:BG,minHeight:"100vh",fontFamily:"'Plus Jakarta Sans',sans-serif",paddingBottom:40}}>
       <NavBar onBack={step>1?()=>{setStep(s=>s-1);setError("");}:()=>nav("/")} right={<span style={{color:MUTED,fontSize:12,fontWeight:600}}>Step {step}/3</span>}/>
       <div style={{maxWidth:520,margin:"32px auto",padding:"0 20px"}}>
-        <Prog/>
+        <Prog step={step}/>
         {/* Step label */}
         <div style={{marginBottom:20}}>
           <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:PRIMARY,marginBottom:4}}>{stepLabels[step-1]}</h2>

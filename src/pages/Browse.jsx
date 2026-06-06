@@ -11,12 +11,14 @@ function groupPosts(posts){
   const map={};
   for(const post of posts){
     const key=`${post.company}__${(post.role||"").toLowerCase().trim()}`;
-    if(!map[key]) map[key]={key,company:post.company,role:post.role,skills:post.skills||[],ctcMin:post.ctcMin,ctcMax:post.ctcMax,expMin:post.expMin,expMax:post.expMax,city:post.city||"India",posts:[],totalSlots:0};
+    if(!map[key]) map[key]={key,company:post.company,role:post.role,skills:post.skills||[],ctcMin:post.ctcMin,ctcMax:post.ctcMax,expMin:post.expMin,expMax:post.expMax,city:post.city||"India",posts:[],totalSlots:0,description:post.description||""};
     map[key].posts.push(post);
     map[key].totalSlots+=(post.slots||1);
     map[key].ctcMin=Math.min(map[key].ctcMin||post.ctcMin||0,post.ctcMin||0);
     map[key].ctcMax=Math.max(map[key].ctcMax||post.ctcMax||0,post.ctcMax||0);
     for(const s of(post.skills||[])){if(!map[key].skills.includes(s))map[key].skills.push(s);}
+    // Use description from first post that has one
+    if(!map[key].description&&post.description) map[key].description=post.description;
   }
   return Object.values(map);
 }
@@ -140,7 +142,7 @@ export default function Browse(){
             <div style={{fontSize:14}}>Try a different search or check back soon</div>
           </div>
         ):(
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:16}}>
             {filtered.map(group=>{
               const applied=isApplied(group);
               const empCount=group.posts.length;
@@ -150,7 +152,8 @@ export default function Browse(){
                   onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 8px 24px rgba(0,0,0,0.1)";}}
                   onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,0.04)";}}>
 
-                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
+                  {/* Top row */}
+                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontWeight:700,fontSize:15,color:TEXT,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:3}}>{group.role}</div>
                       <div style={{color:MUTED,fontSize:13}}>{group.company} • {group.city}</div>
@@ -161,7 +164,14 @@ export default function Browse(){
                     }
                   </div>
 
-                  {/* Employee count badge */}
+                  {/* Short description */}
+                  {group.description&&(
+                    <p style={{color:MUTED,fontSize:13,lineHeight:1.6,marginBottom:10,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>
+                      {group.description}
+                    </p>
+                  )}
+
+                  {/* Employee count */}
                   <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:8,padding:"8px 12px",marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
                     <span style={{fontSize:14}}>👥</span>
                     <div style={{fontSize:13}}>
@@ -178,10 +188,10 @@ export default function Browse(){
                   </div>
 
                   {/* Stats */}
-                  <div style={{display:"flex",gap:16,paddingTop:12,borderTop:`1px solid ${BORDER}`}}>
+                  <div style={{display:"flex",gap:16,paddingTop:12,borderTop:`1px solid ${BORDER}`,alignItems:"center"}}>
                     {group.ctcMax>0&&<div><div style={{color:MUTED,fontSize:10,fontWeight:600,marginBottom:2}}>SALARY</div><div style={{color:TEXT,fontWeight:700,fontSize:13}}>₹{group.ctcMin}–{group.ctcMax}L</div></div>}
                     {group.expMax>0&&<div><div style={{color:MUTED,fontSize:10,fontWeight:600,marginBottom:2}}>EXP</div><div style={{color:TEXT,fontWeight:700,fontSize:13}}>{group.expMin}–{group.expMax} yrs</div></div>}
-                    <div style={{marginLeft:"auto",fontSize:12,color:MUTED,display:"flex",alignItems:"center",gap:4}}>
+                    <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4,fontSize:12,color:MUTED}}>
                       <span style={{color:GREEN}}>⚡</span> Smart routed
                     </div>
                   </div>
@@ -192,75 +202,99 @@ export default function Browse(){
         )}
       </div>
 
-      {/* APPLY MODAL */}
+      {/* APPLY MODAL — centered on desktop, bottom sheet on mobile */}
       {selected&&(
-        <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,0.6)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
+        <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(15,23,42,0.6)",backdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}
           onClick={e=>e.target===e.currentTarget&&setSelected(null)}>
-          <div style={{background:WHITE,borderRadius:"24px 24px 0 0",width:"100%",maxWidth:500,padding:"28px 24px 40px",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 -4px 40px rgba(0,0,0,0.15)"}}>
-            <div style={{width:40,height:4,background:BORDER,borderRadius:2,margin:"0 auto 20px"}}/>
+          <div style={{background:WHITE,borderRadius:20,width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+            <div style={{width:40,height:4,background:BORDER,borderRadius:2,margin:"16px auto 0"}}/>
 
-            {modalStep===1&&<>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}}>
-                <div>
-                  <div style={{fontSize:11,color:GREEN,fontWeight:700,letterSpacing:"1px",marginBottom:6}}>APPLY VIA REFERRAL</div>
-                  <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY}}>{selected.role}</h3>
-                  <p style={{color:MUTED,fontSize:13,marginTop:4}}>{selected.company}</p>
+            {/* STEP 1 */}
+            {modalStep===1&&(
+              <div style={{padding:"20px 24px 28px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+                  <div>
+                    <div style={{fontSize:11,color:GREEN,fontWeight:700,letterSpacing:"1px",marginBottom:6}}>APPLY VIA REFERRAL</div>
+                    <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY}}>{selected.role}</h3>
+                    <p style={{color:MUTED,fontSize:13,marginTop:4}}>{selected.company}</p>
+                  </div>
+                  <button onClick={()=>setSelected(null)} style={{background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:22,padding:4}}>✕</button>
                 </div>
-                <button onClick={()=>setSelected(null)} style={{background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:22}}>✕</button>
-              </div>
-              <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 14px",marginBottom:16}}>
-                <div style={{color:"#15803D",fontWeight:700,fontSize:13,marginBottom:4}}>⚡ Smart Routing Active</div>
-                <div style={{color:MUTED,fontSize:13,lineHeight:1.6}}><strong style={{color:TEXT}}>{selected.posts.length} employee{selected.posts.length>1?"s":""}</strong> from {selected.company} can refer you. We'll send your profile to the one with the most slots.</div>
-              </div>
-              {[["Company",selected.company],["Role",selected.role],...(selected.ctcMax>0?[["CTC",`₹${selected.ctcMin}–${selected.ctcMax} LPA`]]:[]),...(selected.expMax>0?[["Experience",`${selected.expMin}–${selected.expMax} years`]]:[]),["Total Slots",`${selected.totalSlots} available`]].map(([k,v])=>(
-                <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${BORDER}`}}>
-                  <span style={{color:MUTED,fontSize:13}}>{k}</span>
-                  <span style={{color:TEXT,fontSize:13,fontWeight:600}}>{v}</span>
+
+                {/* Description in modal */}
+                {selected.description&&(
+                  <div style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:10,padding:"12px 14px",marginBottom:14,fontSize:13,color:TEXT,lineHeight:1.7}}>
+                    {selected.description}
+                  </div>
+                )}
+
+                <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 14px",marginBottom:14}}>
+                  <div style={{color:"#15803D",fontWeight:700,fontSize:13,marginBottom:4}}>⚡ Smart Routing Active</div>
+                  <div style={{color:MUTED,fontSize:13,lineHeight:1.6}}><strong style={{color:TEXT}}>{selected.posts.length} employee{selected.posts.length>1?"s":""}</strong> from {selected.company} can refer you. We'll send your profile to the one with the most slots.</div>
                 </div>
-              ))}
-              <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 14px",margin:"16px 0",fontSize:13,color:"#15803D",lineHeight:1.7}}>
-                Referred candidates are <strong>5x more likely</strong> to get an interview.
+
+                {[
+                  ["Company",selected.company],
+                  ["Role",selected.role],
+                  ...(selected.ctcMax>0?[["CTC",`₹${selected.ctcMin}–${selected.ctcMax} LPA`]]:[]),
+                  ...(selected.expMax>0?[["Experience",`${selected.expMin}–${selected.expMax} years`]]:[]),
+                  ["Total Slots",`${selected.totalSlots} available`],
+                ].map(([k,v])=>(
+                  <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${BORDER}`}}>
+                    <span style={{color:MUTED,fontSize:13}}>{k}</span>
+                    <span style={{color:TEXT,fontSize:13,fontWeight:600}}>{v}</span>
+                  </div>
+                ))}
+
+                <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 14px",margin:"16px 0",fontSize:13,color:"#15803D",lineHeight:1.7}}>
+                  Referred candidates are <strong>5x more likely</strong> to get an interview than direct applicants.
+                </div>
+
+                {isApplied(selected)
+                  ?<div style={{background:GREENBG,border:"1px solid #86EFAC",borderRadius:10,padding:"14px",textAlign:"center",color:"#15803D",fontWeight:700}}>✓ Already Applied to this role at {selected.company}</div>
+                  :<button onClick={()=>auth.currentUser?setModalStep(2):nav("/login")}
+                    style={{width:"100%",background:GREEN,border:"none",color:WHITE,padding:"14px",borderRadius:10,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                    {auth.currentUser?"Apply Now ✦":"Login to Apply"}
+                  </button>
+                }
               </div>
-              {isApplied(selected)
-                ?<div style={{background:GREENBG,border:"1px solid #86EFAC",borderRadius:10,padding:"14px",textAlign:"center",color:"#15803D",fontWeight:700}}>✓ Already Applied to this role at {selected.company}</div>
-                :<button onClick={()=>auth.currentUser?setModalStep(2):nav("/login")}
-                  style={{width:"100%",background:GREEN,border:"none",color:WHITE,padding:"14px",borderRadius:10,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                  {auth.currentUser?"Apply Now ✦":"Login to Apply"}
+            )}
+
+            {/* STEP 2 */}
+            {modalStep===2&&(
+              <div style={{padding:"20px 24px 28px"}}>
+                <div style={{textAlign:"center",marginBottom:20}}>
+                  <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY,marginBottom:6}}>Confirm Application</h3>
+                  <p style={{color:MUTED,fontSize:13}}>Your profile goes to the best matched employee at {selected.company}</p>
+                </div>
+                <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:12,padding:20,marginBottom:20,textAlign:"center"}}>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:40,fontWeight:800,color:PRIMARY}}>₹199</div>
+                  <div style={{color:MUTED,fontSize:13,marginTop:4}}>per month after free trial</div>
+                  <div style={{color:GREEN,fontSize:12,fontWeight:600,marginTop:4}}>First month completely free</div>
+                </div>
+                <button onClick={()=>handleApply(selected)} disabled={applying}
+                  style={{width:"100%",background:GREEN,border:"none",color:WHITE,padding:"14px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:10,opacity:applying?0.7:1}}>
+                  {applying?"Applying...":"Apply Now (Free Trial)"}
                 </button>
-              }
-            </>}
-
-            {modalStep===2&&<>
-              <div style={{textAlign:"center",marginBottom:20}}>
-                <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY,marginBottom:6}}>Confirm Application</h3>
-                <p style={{color:MUTED,fontSize:13}}>Your profile goes to the best matched employee at {selected.company}</p>
+                <button onClick={()=>setModalStep(1)} style={{width:"100%",background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>← Go Back</button>
               </div>
-              <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:12,padding:20,marginBottom:20,textAlign:"center"}}>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:40,fontWeight:800,color:PRIMARY}}>₹799</div>
-                <div style={{color:MUTED,fontSize:13,marginTop:4}}>3-month unlimited plan</div>
-              </div>
-              <button onClick={()=>handleApply(selected)} disabled={applying}
-                style={{width:"100%",background:GREEN,border:"none",color:WHITE,padding:"14px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:10,opacity:applying?0.7:1}}>
-                {applying?"Applying...":"Pay ₹799 & Apply"}
-              </button>
-              <button onClick={()=>setModalStep(1)} style={{width:"100%",background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>← Go Back</button>
-            </>}
+            )}
 
-            {modalStep===3&&<>
-              <div style={{textAlign:"center",padding:"20px 0"}}>
+            {/* STEP 3 */}
+            {modalStep===3&&(
+              <div style={{padding:"20px 24px 36px",textAlign:"center"}}>
                 <div style={{fontSize:52,marginBottom:14}}>🎉</div>
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:PRIMARY,marginBottom:8}}>Application Sent!</h3>
                 <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"14px 16px",margin:"16px 0",textAlign:"left"}}>
                   <div style={{color:"#15803D",fontWeight:700,fontSize:13,marginBottom:6}}>⚡ Smart Routing Complete</div>
-                  <div style={{color:MUTED,fontSize:13,lineHeight:1.7}}>Your profile was sent to the best available employee at <strong style={{color:TEXT}}>{selected.company}</strong>.</div>
+                  <div style={{color:MUTED,fontSize:13,lineHeight:1.7}}>Your profile was sent to the best available employee at <strong style={{color:TEXT}}>{selected.company}</strong>. They will review and submit internally.</div>
                 </div>
-                <p style={{color:GREEN,fontSize:13,fontWeight:600,marginBottom:24}}>Guaranteed response within 7 days. ✦</p>
-                <div style={{display:"grid",gap:10}}>
+                <div style={{display:"grid",gap:10,marginTop:16}}>
                   <button onClick={()=>{setSelected(null);nav("/dashboard");}} style={{background:GREEN,border:"none",color:WHITE,padding:"12px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Track Application →</button>
                   <button onClick={()=>setSelected(null)} style={{background:"none",border:`1.5px solid ${BORDER}`,color:MUTED,padding:"12px",borderRadius:10,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Browse More Roles</button>
                 </div>
               </div>
-            </>}
+            )}
           </div>
         </div>
       )}

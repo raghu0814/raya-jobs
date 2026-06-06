@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase/config";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const PRIMARY="#1A2E4A",GREEN="#22C55E",GREENBG="#F0FDF4";
 const BG="#FFFFFF",BG2="#F8FAFC",BORDER="#E2E8F0",TEXT="#0F172A",MUTED="#64748B";
@@ -21,7 +21,6 @@ const IlluPost=()=>(
     <rect x="129" y="36" width="16" height="3" rx="1.5" fill="#BBF7D0"/>
   </svg>
 );
-
 const IlluRefer=()=>(
   <svg viewBox="0 0 180 140" fill="none" style={{width:"100%",maxWidth:160}}>
     <circle cx="44" cy="56" r="26" fill="#E0F2FE" stroke="#BAE6FD" strokeWidth="1.5"/>
@@ -39,7 +38,6 @@ const IlluRefer=()=>(
     <rect x="120" y="107" width="18" height="3" rx="1.5" fill="#BBF7D0"/>
   </svg>
 );
-
 const IlluHire=()=>(
   <svg viewBox="0 0 180 140" fill="none" style={{width:"100%",maxWidth:160}}>
     <rect x="20" y="20" width="140" height="100" rx="16" fill="#F0FDF4" stroke="#BBF7D0" strokeWidth="1.5"/>
@@ -53,7 +51,6 @@ const IlluHire=()=>(
     <rect x="60" y="106" width="60" height="4" rx="2" fill="#BBF7D0"/>
   </svg>
 );
-
 const IlluReward=()=>(
   <svg viewBox="0 0 180 140" fill="none" style={{width:"100%",maxWidth:160}}>
     <rect x="20" y="30" width="140" height="80" rx="14" fill={PRIMARY}/>
@@ -69,7 +66,6 @@ const IlluReward=()=>(
     <rect x="128" y="34" width="18" height="3" rx="1.5" fill="#BBF7D0"/>
   </svg>
 );
-
 const HeroIllus=()=>(
   <svg viewBox="0 0 440 360" fill="none" style={{width:"100%",maxWidth:440}}>
     <ellipse cx="260" cy="190" rx="150" ry="130" fill="#F0FDF4" opacity="0.8"/>
@@ -112,20 +108,17 @@ const HeroIllus=()=>(
   </svg>
 );
 
-// ── SHARED COMPONENTS ─────────────────────────────────────
 const Pill=({children})=>(
   <div style={{display:"inline-flex",alignItems:"center",gap:6,background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"5px 12px",fontSize:12,color:"#15803D",fontWeight:600}}>
     <span style={{color:GREEN,fontSize:10}}>✓</span>{children}
   </div>
 );
-
 const Check=({text,color=GREEN,bg=GREENBG})=>(
   <div style={{display:"flex",gap:10,alignItems:"flex-start",fontSize:14,color:TEXT}}>
     <div style={{width:20,height:20,borderRadius:"50%",background:bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color,fontWeight:700,flexShrink:0,marginTop:1}}>✓</div>
     {text}
   </div>
 );
-
 const StepCard=({num,title,desc,Illus,color})=>(
   <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:20,padding:24,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",transition:"transform 0.2s,box-shadow 0.2s",cursor:"default"}}
     onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(15,23,42,0.08)";}}
@@ -136,7 +129,6 @@ const StepCard=({num,title,desc,Illus,color})=>(
     <div style={{color:MUTED,fontSize:13,lineHeight:1.7}}>{desc}</div>
   </div>
 );
-
 const Testimonial=({quote,name,role,company,emoji})=>(
   <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:20,padding:24}}>
     <div style={{fontSize:28,marginBottom:10}}>{emoji}</div>
@@ -148,12 +140,25 @@ const Testimonial=({quote,name,role,company,emoji})=>(
   </div>
 );
 
-// ── MAIN ─────────────────────────────────────────────────
 export default function Landing(){
   const nav=useNavigate();
   const user=auth.currentUser;
   const[scrolled,setScrolled]=useState(false);
-  useEffect(()=>{const h=()=>setScrolled(window.scrollY>20);window.addEventListener("scroll",h);return()=>window.removeEventListener("scroll",h);},[]);
+
+  // Section refs for scroll navigation
+  const howItWorksRef=useRef(null);
+  const pricingRef=useRef(null);
+
+  useEffect(()=>{
+    const h=()=>setScrolled(window.scrollY>20);
+    window.addEventListener("scroll",h);
+    return()=>window.removeEventListener("scroll",h);
+  },[]);
+
+  const scrollTo=(ref)=>{
+    ref.current?.scrollIntoView({behavior:"smooth",block:"start"});
+  };
+
   const companies=["TCS","Infosys","Wipro","Accenture","Amazon","Microsoft","Cognizant","HCL","Swiggy","Zomato","PhonePe","Flipkart","Razorpay","CRED","Meesho"];
 
   return(
@@ -180,8 +185,8 @@ export default function Landing(){
         </div>
         <div style={{display:"flex",alignItems:"center",gap:24}}>
           <span className="nav-link" onClick={()=>nav("/browse")} style={{color:MUTED,fontSize:13,fontWeight:500}}>Browse Jobs</span>
-          <span className="nav-link" style={{color:MUTED,fontSize:13,fontWeight:500}}>How it Works</span>
-          <span className="nav-link" style={{color:MUTED,fontSize:13,fontWeight:500}}>Pricing</span>
+          <span className="nav-link" onClick={()=>scrollTo(howItWorksRef)} style={{color:MUTED,fontSize:13,fontWeight:500}}>How it Works</span>
+          <span className="nav-link" onClick={()=>scrollTo(pricingRef)} style={{color:MUTED,fontSize:13,fontWeight:500}}>Pricing</span>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {user?(
@@ -210,14 +215,14 @@ export default function Landing(){
           </p>
           <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:32}}>
             <Pill>5x higher chance of getting hired</Pill>
-            <Pill>7-day response guarantee</Pill>
             <Pill>Direct employee contact</Pill>
+            <Pill>1 month free trial</Pill>
           </div>
           <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
             <button className="cta-btn" onClick={()=>nav("/register")} style={{background:GREEN,border:"none",color:"white",padding:"13px 30px",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started Free →</button>
             <button onClick={()=>nav("/browse")} style={{background:"none",border:`2px solid ${BORDER}`,color:PRIMARY,padding:"13px 26px",borderRadius:12,fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals</button>
           </div>
-          <p style={{color:MUTED,fontSize:12,marginTop:12}}>First 2 applications & 1 post free. No credit card needed.</p>
+          <p style={{color:MUTED,fontSize:12,marginTop:12}}>First month completely free. No credit card needed.</p>
         </div>
         <div className="hero-img" style={{display:"flex",justifyContent:"center"}}><HeroIllus/></div>
       </section>
@@ -246,7 +251,7 @@ export default function Landing(){
       </section>
 
       {/* HOW IT WORKS */}
-      <section style={{padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)",maxWidth:1200,margin:"0 auto"}}>
+      <section ref={howItWorksRef} style={{padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)",maxWidth:1200,margin:"0 auto",scrollMarginTop:80}}>
         <div style={{textAlign:"center",marginBottom:52}}>
           <div style={{display:"inline-block",background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"5px 14px",fontSize:11,color:"#15803D",fontWeight:700,letterSpacing:"1px",marginBottom:14}}>THE PROCESS</div>
           <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(26px,5vw,42px)",fontWeight:800,color:PRIMARY,marginBottom:12}}>How RaYa Jobs Works</h2>
@@ -268,48 +273,37 @@ export default function Landing(){
             <p style={{color:MUTED,fontSize:15,maxWidth:480,margin:"0 auto"}}>Whether you're job hunting or want to help others get hired — RaYa Jobs works both ways</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:20}}>
-
-            {/* Job Seeker */}
             <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:22,padding:32,borderTop:`4px solid ${GREEN}`}}>
               <div style={{width:52,height:52,borderRadius:14,background:GREENBG,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:18}}>🎯</div>
               <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY,marginBottom:8}}>Looking for a Job?</h3>
-              <p style={{color:MUTED,fontSize:14,lineHeight:1.8,marginBottom:22}}>
-                Get referred by real employees inside top IT companies. Referred candidates are <strong style={{color:PRIMARY}}>5x more likely</strong> to get an interview than direct applicants.
-              </p>
+              <p style={{color:MUTED,fontSize:14,lineHeight:1.8,marginBottom:22}}>Get referred by real employees at top IT companies. Referred candidates are <strong style={{color:PRIMARY}}>5x more likely</strong> to get an interview.</p>
               <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:26}}>
                 <Check text="Browse referrals by company and role"/>
                 <Check text="Apply directly to an employee insider"/>
-                <Check text="Guaranteed response within 7 days"/>
                 <Check text="Track every application in real time"/>
+                <Check text="Communicate directly with the employee"/>
               </div>
               <button className="cta-btn" onClick={()=>nav("/register")} style={{width:"100%",background:GREEN,border:"none",color:"white",padding:"13px",borderRadius:11,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Find Referrals →</button>
             </div>
-
-            {/* Employee */}
             <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:22,padding:32,borderTop:`4px solid ${PRIMARY}`}}>
               <div style={{width:52,height:52,borderRadius:14,background:"#EFF6FF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:18}}>💼</div>
               <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY,marginBottom:8}}>Working in IT?</h3>
-              <p style={{color:MUTED,fontSize:14,lineHeight:1.8,marginBottom:22}}>
-                Your company already has a referral programme. RaYa Jobs helps you find the <strong style={{color:PRIMARY}}>right candidate faster</strong> so you can make a successful referral and claim your company's reward.
-              </p>
+              <p style={{color:MUTED,fontSize:14,lineHeight:1.8,marginBottom:22}}>Your company already has a referral programme. RaYa helps you find the <strong style={{color:PRIMARY}}>right candidate faster</strong> so you can make a successful referral.</p>
               <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:26}}>
                 <Check text="Post referral openings in 2 minutes" color="#3B82F6" bg="#EFF6FF"/>
-                <Check text="Receive only serious, paid applicants" color="#3B82F6" bg="#EFF6FF"/>
+                <Check text="Receive only serious applicants" color="#3B82F6" bg="#EFF6FF"/>
                 <Check text="Smart routing to best matched candidate" color="#3B82F6" bg="#EFF6FF"/>
                 <Check text="Your company rewards you when they join" color="#3B82F6" bg="#EFF6FF"/>
               </div>
               <button className="cta-btn" onClick={()=>nav("/register")} style={{width:"100%",background:PRIMARY,border:"none",color:"white",padding:"13px",borderRadius:11,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Post a Referral →</button>
             </div>
           </div>
-
-          {/* Referrer clarity box */}
+          {/* Clarity box */}
           <div style={{marginTop:20,background:"white",border:`1px solid ${BORDER}`,borderRadius:16,padding:"24px 28px",display:"flex",gap:16,alignItems:"flex-start"}}>
             <div style={{width:44,height:44,borderRadius:12,background:GREENBG,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>💡</div>
             <div>
               <div style={{fontWeight:700,color:PRIMARY,fontSize:15,marginBottom:6}}>How does the referral reward work?</div>
-              <p style={{color:MUTED,fontSize:13,lineHeight:1.8}}>
-                Most IT companies have an internal referral programme where employees earn a reward when someone they refer gets hired. RaYa Jobs helps you find the right candidate quickly so your referral succeeds. The reward amount and terms are determined entirely by your company's HR policy — RaYa Jobs has no involvement in the payment.
-              </p>
+              <p style={{color:MUTED,fontSize:13,lineHeight:1.8}}>Most IT companies have an internal referral programme where employees earn a reward when someone they refer gets hired. RaYa Jobs helps you find the right candidate quickly so your referral succeeds. The reward amount and terms are determined entirely by your company's HR policy.</p>
             </div>
           </div>
         </div>
@@ -322,36 +316,38 @@ export default function Landing(){
           <p style={{color:MUTED,fontSize:14}}>Real results from real IT professionals</p>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18}}>
-          <Testimonial emoji="🎉" quote="Got referred to Amazon through RaYa Jobs. The employee responded in 3 days, interview scheduled by Day 5. Joined last month!" name="Preethi Nair" role="SDE-2" company="Amazon"/>
+          <Testimonial emoji="🎉" quote="Got referred to Amazon through RaYa Jobs. The employee responded quickly, interview was scheduled, and I joined last month!" name="Preethi Nair" role="SDE-2" company="Amazon"/>
           <Testimonial emoji="🚀" quote="My company has a referral programme but I never found the right candidates. RaYa Jobs sent me 3 quality profiles in 2 days. One of them joined!" name="Kiran Reddy" role="Senior Developer" company="Amazon"/>
           <Testimonial emoji="💪" quote="Applied to 50 jobs on Naukri — heard from 1. Applied to 3 referrals on RaYa Jobs — heard from all 3. The difference is real." name="Arjun Sharma" role="SAP Consultant" company="Cognizant"/>
         </div>
       </section>
 
       {/* PRICING */}
-      <section style={{background:BG2,padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)"}}>
+      <section ref={pricingRef} style={{background:BG2,padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)",scrollMarginTop:80}}>
         <div style={{maxWidth:860,margin:"0 auto",textAlign:"center"}}>
           <div style={{display:"inline-block",background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"5px 14px",fontSize:11,color:"#15803D",fontWeight:700,letterSpacing:"1px",marginBottom:14}}>PRICING</div>
           <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(24px,5vw,40px)",fontWeight:800,color:PRIMARY,marginBottom:10}}>Simple, Honest Pricing</h2>
-          <p style={{color:MUTED,fontSize:15,marginBottom:44}}>Start free. Upgrade when you're ready.</p>
+          <p style={{color:MUTED,fontSize:15,marginBottom:44}}>Start free for 1 month. Upgrade when you're ready.</p>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:18}}>
+            {/* Free */}
             <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:22,padding:30,textAlign:"left"}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY,marginBottom:4}}>Free</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY,marginBottom:4}}>Free Trial</div>
               <div style={{fontFamily:"'Playfair Display',serif",fontSize:38,fontWeight:800,color:PRIMARY,marginBottom:4}}>₹0</div>
-              <div style={{color:MUTED,fontSize:12,marginBottom:20}}>To get started</div>
-              {["2 job applications","1 referral post","Profile & resume","Application tracking"].map(f=>(
+              <div style={{color:MUTED,fontSize:12,marginBottom:20}}>First 1 month free</div>
+              {["Unlimited job applications","Unlimited referral posts","Profile & resume","Application tracking","Comment & messaging system"].map(f=>(
                 <div key={f} style={{display:"flex",gap:8,alignItems:"center",fontSize:13,color:TEXT,marginBottom:9}}>
                   <span style={{color:GREEN,fontWeight:700}}>✓</span>{f}
                 </div>
               ))}
-              <button onClick={()=>nav("/register")} style={{marginTop:18,width:"100%",background:"none",border:`2px solid ${BORDER}`,color:PRIMARY,padding:"11px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started</button>
+              <button onClick={()=>nav("/register")} style={{marginTop:18,width:"100%",background:"none",border:`2px solid ${BORDER}`,color:PRIMARY,padding:"11px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started Free</button>
             </div>
+            {/* Pro */}
             <div style={{background:PRIMARY,borderRadius:22,padding:30,textAlign:"left",position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",top:14,right:14,background:GREEN,color:"white",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:100}}>POPULAR</div>
               <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"white",marginBottom:4}}>Pro</div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:38,fontWeight:800,color:"white",marginBottom:4}}>₹799</div>
-              <div style={{color:"rgba(255,255,255,0.6)",fontSize:12,marginBottom:20}}>per 3 months</div>
-              {["Unlimited job applications","Unlimited referral posts","Smart candidate routing","Priority listing","Resume storage","7-day guarantee"].map(f=>(
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:38,fontWeight:800,color:"white",marginBottom:4}}>₹199</div>
+              <div style={{color:"rgba(255,255,255,0.6)",fontSize:12,marginBottom:20}}>per month</div>
+              {["Unlimited job applications","Unlimited referral posts","Smart candidate routing","Priority listing","Resume storage","Full messaging system"].map(f=>(
                 <div key={f} style={{display:"flex",gap:8,alignItems:"center",fontSize:13,color:"rgba(255,255,255,0.9)",marginBottom:9}}>
                   <span style={{color:GREEN,fontWeight:700}}>✓</span>{f}
                 </div>
@@ -373,7 +369,7 @@ export default function Landing(){
             <button className="cta-btn" onClick={()=>nav("/register")} style={{background:GREEN,border:"none",color:"white",padding:"14px 36px",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Join RaYa Free →</button>
             <button onClick={()=>nav("/browse")} style={{background:"transparent",border:"2px solid rgba(255,255,255,0.3)",color:"white",padding:"14px 28px",borderRadius:12,fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals</button>
           </div>
-          <p style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:18}}>First 2 applications free • No credit card needed</p>
+          <p style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:18}}>First month free • No credit card needed</p>
         </div>
       </section>
 
