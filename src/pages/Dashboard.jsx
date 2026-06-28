@@ -14,7 +14,8 @@ const allSkills=["Java","Python","React","Angular","Vue.js","Node.js","Spring Bo
 
 const ST={"Applied":{color:"#3B82F6",icon:"📨"},"Reviewing":{color:"#F59E0B",icon:"👀"},"Referred":{color:"#8B5CF6",icon:"🚀"},"Shortlisted":{color:GREEN,icon:"✓"},"Interviewing":{color:"#F97316",icon:"🎯"},"Offered":{color:GREEN,icon:"🎉"},"Hired":{color:GREEN,icon:"🏆"},"Rejected":{color:"#EF4444",icon:"✕"}};
 
-// ── SHARED INPUT — defined OUTSIDE component to prevent cursor bug ─
+// ── All components defined OUTSIDE to prevent cursor/render bugs ──
+
 const Inp=({label,placeholder,type="text",value,onChange})=>(
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
     <label style={{fontSize:11,fontWeight:700,color:PRIMARY}}>{label}</label>
@@ -24,7 +25,6 @@ const Inp=({label,placeholder,type="text",value,onChange})=>(
   </div>
 );
 
-// ── SKILL SELECTOR — defined OUTSIDE component to prevent cursor bug ──
 function SkillSelector({skills,setSkills}){
   const[input,setInput]=useState("");
   const add=(s)=>{const v=s.trim();if(v&&!skills.includes(v))setSkills(p=>[...p,v]);};
@@ -42,20 +42,13 @@ function SkillSelector({skills,setSkills}){
         </div>
       )}
       <div style={{display:"flex",gap:8}}>
-        <input
-          value={input}
-          onChange={e=>setInput(e.target.value)}
+        <input value={input} onChange={e=>setInput(e.target.value)}
           onKeyDown={e=>{if(e.key==="Enter"&&input.trim()){add(input);setInput("");}}}
           placeholder="Type any skill and press Enter…"
           style={{flex:1,background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"10px 14px",color:TEXT,fontSize:13,outline:"none",fontFamily:"inherit"}}
-          onFocus={e=>e.target.style.borderColor=GREEN}
-          onBlur={e=>e.target.style.borderColor=BORDER}
-        />
-        <button
-          onClick={()=>{add(input);setInput("");}}
-          style={{background:GREEN,border:"none",color:WHITE,padding:"10px 16px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-          Add
-        </button>
+          onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
+        <button onClick={()=>{add(input);setInput("");}}
+          style={{background:GREEN,border:"none",color:WHITE,padding:"10px 16px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Add</button>
       </div>
       <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
         {allSkills.filter(s=>!skills.includes(s)).map(s=>(
@@ -67,7 +60,6 @@ function SkillSelector({skills,setSkills}){
   );
 }
 
-// ── EDIT SKILL SELECTOR — separate instance to avoid cursor issues ──
 function EditSkillSelector({skills,setSkills}){
   const[input,setInput]=useState("");
   const add=(s)=>{const v=s.trim();if(v&&!skills.includes(v))setSkills(p=>[...p,v]);};
@@ -85,15 +77,11 @@ function EditSkillSelector({skills,setSkills}){
         </div>
       )}
       <div style={{display:"flex",gap:8}}>
-        <input
-          value={input}
-          onChange={e=>setInput(e.target.value)}
+        <input value={input} onChange={e=>setInput(e.target.value)}
           onKeyDown={e=>{if(e.key==="Enter"&&input.trim()){add(input);setInput("");}}}
           placeholder="Type any skill and press Enter…"
           style={{flex:1,background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"10px 14px",color:TEXT,fontSize:13,outline:"none",fontFamily:"inherit"}}
-          onFocus={e=>e.target.style.borderColor=GREEN}
-          onBlur={e=>e.target.style.borderColor=BORDER}
-        />
+          onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
         <button onClick={()=>{add(input);setInput("");}}
           style={{background:GREEN,border:"none",color:WHITE,padding:"10px 16px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Add</button>
       </div>
@@ -107,7 +95,6 @@ function EditSkillSelector({skills,setSkills}){
   );
 }
 
-// ── COMMENT THREAD ────────────────────────────────────────
 function CommentThread({appId,currentUser,role}){
   const[comments,setComments]=useState([]);
   const[text,setText]=useState("");
@@ -168,16 +155,12 @@ function CommentThread({appId,currentUser,role}){
       </div>
       <div style={{padding:"10px 16px 14px",borderTop:`1px solid ${BORDER}`}}>
         <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
-          <textarea
-            value={text}
-            onChange={e=>setText(e.target.value)}
+          <textarea value={text} onChange={e=>setText(e.target.value)}
             onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend();}}}
             placeholder="Add an update or ask a question… (Enter to send)"
             rows={2}
             style={{flex:1,background:BG,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"10px 14px",color:TEXT,fontSize:13,outline:"none",fontFamily:"inherit",resize:"none",lineHeight:1.5}}
-            onFocus={e=>e.target.style.borderColor=GREEN}
-            onBlur={e=>e.target.style.borderColor=BORDER}
-          />
+            onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
           <button onClick={handleSend} disabled={sending||!text.trim()}
             style={{background:text.trim()?GREEN:"#E2E8F0",border:"none",color:text.trim()?WHITE:MUTED,padding:"10px 16px",borderRadius:10,fontSize:13,fontWeight:700,cursor:text.trim()?"pointer":"not-allowed",fontFamily:"inherit",flexShrink:0}}>
             {sending?"...":"Send"}
@@ -194,7 +177,6 @@ function daysLeft(lastDate){
   return Math.ceil((new Date(lastDate)-new Date())/(1000*60*60*24));
 }
 
-// ── MAIN DASHBOARD ────────────────────────────────────────
 export default function Dashboard(){
   const nav=useNavigate();
   const user=auth.currentUser;
@@ -210,19 +192,13 @@ export default function Dashboard(){
   const[posting,setPosting]=useState(false);
   const[postError,setPostError]=useState("");
   const[postSkills,setPostSkills]=useState([]);
-
-  // Post form — use empty strings NOT numbers to avoid placeholder issue
   const[j,setJ]=useState({company:"",role:"",expMin:"",expMax:"",ctcMin:"",ctcMax:"",slots:"",lastDate:"",desc:""});
   const sj=(k,v)=>setJ(p=>({...p,[k]:v}));
-
-  // Edit post state
   const[editPost,setEditPost]=useState(null);
   const[editForm,setEditForm]=useState({});
   const[editSkills,setEditSkills]=useState([]);
   const[editSaving,setEditSaving]=useState(false);
   const[editError,setEditError]=useState("");
-
-  // Profile state
   const[userProfile,setUserProfile]=useState(null);
   const[resumeUploading,setResumeUploading]=useState(false);
   const[resumeMsg,setResumeMsg]=useState("");
@@ -245,10 +221,8 @@ export default function Dashboard(){
             await updateDoc(doc(db,"referralPosts",p.id),{status:"Closed"});
             p.status="Closed";
           }
-          try{
-            const appSnap=await getDocs(query(collection(db,"applications"),where("referralPostId","==",p.id)));
-            return{...p,appCount:appSnap.size};
-          }catch{return{...p,appCount:0};}
+          try{const s=await getDocs(query(collection(db,"applications"),where("referralPostId","==",p.id)));return{...p,appCount:s.size};}
+          catch{return{...p,appCount:0};}
         }));
         setMyPosts(postsWithCounts);
       }catch(e){console.error(e);}
@@ -283,12 +257,9 @@ export default function Dashboard(){
       const newRef=await addDoc(collection(db,"referralPosts"),{
         employeeId:user.uid,employeeName:user.displayName,
         company:j.company,designation:"Employee",role:j.role,skills:postSkills,
-        expMin:j.expMin?Number(j.expMin):0,
-        expMax:j.expMax?Number(j.expMax):0,
-        ctcMin:j.ctcMin?Number(j.ctcMin):0,
-        ctcMax:j.ctcMax?Number(j.ctcMax):0,
-        slots:j.slots?Number(j.slots):2,
-        description:j.desc,
+        expMin:j.expMin?Number(j.expMin):0,expMax:j.expMax?Number(j.expMax):0,
+        ctcMin:j.ctcMin?Number(j.ctcMin):0,ctcMax:j.ctcMax?Number(j.ctcMax):0,
+        slots:j.slots?Number(j.slots):2,description:j.desc,
         status:"Active",lastDate:j.lastDate,postedAt:serverTimestamp()
       });
       setMyPosts(p=>[{id:newRef.id,employeeId:user.uid,employeeName:user.displayName,status:"Active",...j,skills:postSkills,appCount:0},...p]);
@@ -298,17 +269,9 @@ export default function Dashboard(){
     finally{setPosting(false);}
   };
 
-  // Edit post handlers
   const openEdit=(post)=>{
-    setEditForm({
-      role:post.role||"",company:post.company||"",
-      expMin:post.expMin||"",expMax:post.expMax||"",
-      ctcMin:post.ctcMin||"",ctcMax:post.ctcMax||"",
-      slots:post.slots||"",lastDate:post.lastDate||"",
-      desc:post.description||""
-    });
-    setEditSkills(post.skills||[]);
-    setEditPost(post);setEditError("");
+    setEditForm({role:post.role||"",company:post.company||"",expMin:post.expMin||"",expMax:post.expMax||"",ctcMin:post.ctcMin||"",ctcMax:post.ctcMax||"",slots:post.slots||"",lastDate:post.lastDate||"",desc:post.description||""});
+    setEditSkills(post.skills||[]);setEditPost(post);setEditError("");
   };
 
   const handleSaveEdit=async()=>{
@@ -319,12 +282,9 @@ export default function Dashboard(){
     try{
       await updateDoc(doc(db,"referralPosts",editPost.id),{
         role:editForm.role,company:editForm.company,skills:editSkills,
-        expMin:editForm.expMin?Number(editForm.expMin):0,
-        expMax:editForm.expMax?Number(editForm.expMax):0,
-        ctcMin:editForm.ctcMin?Number(editForm.ctcMin):0,
-        ctcMax:editForm.ctcMax?Number(editForm.ctcMax):0,
-        slots:editForm.slots?Number(editForm.slots):2,
-        lastDate:editForm.lastDate,description:editForm.desc,
+        expMin:editForm.expMin?Number(editForm.expMin):0,expMax:editForm.expMax?Number(editForm.expMax):0,
+        ctcMin:editForm.ctcMin?Number(editForm.ctcMin):0,ctcMax:editForm.ctcMax?Number(editForm.ctcMax):0,
+        slots:editForm.slots?Number(editForm.slots):2,lastDate:editForm.lastDate,description:editForm.desc,
       });
       setMyPosts(p=>p.map(x=>x.id===editPost.id?{...x,...editForm,skills:editSkills,slots:editForm.slots?Number(editForm.slots):2}:x));
       setEditPost(null);
@@ -332,7 +292,6 @@ export default function Dashboard(){
     finally{setEditSaving(false);}
   };
 
-  // Resume management
   const handleResumeUpload=async(file)=>{
     if(!file) return;
     setResumeUploading(true);setResumeMsg("");
@@ -348,13 +307,9 @@ export default function Dashboard(){
   };
 
   const handleResumeDelete=async()=>{
-    if(!userProfile?.resumeURL) return;
     setResumeUploading(true);setResumeMsg("");
     try{
-      try{
-        const storageRef=ref(storage,`resumes/${user.uid}/${userProfile.resumeName||"resume.pdf"}`);
-        await deleteObject(storageRef);
-      }catch(e){}
+      try{await deleteObject(ref(storage,`resumes/${user.uid}/${userProfile.resumeName||"resume.pdf"}`));}catch{}
       await updateDoc(doc(db,"users",user.uid),{resumeURL:"",resumeName:""});
       setUserProfile(p=>({...p,resumeURL:"",resumeName:""}));
       setResumeMsg("Resume deleted.");
@@ -364,12 +319,7 @@ export default function Dashboard(){
 
   const handleLogout=async()=>{await signOut(auth);nav("/login");};
 
-  const counts={
-    applications:apps.length,
-    active:apps.filter(a=>!["Rejected","Hired"].includes(a.status)).length,
-    myPosts:myPosts.filter(p=>p.status==="Active").length,
-    hired:apps.filter(a=>a.status==="Hired").length,
-  };
+  const counts={applications:apps.length,active:apps.filter(a=>!["Rejected","Hired"].includes(a.status)).length,myPosts:myPosts.filter(p=>p.status==="Active").length,hired:apps.filter(a=>a.status==="Hired").length};
 
   if(loading) return <Loader text="Loading dashboard..."/>;
 
@@ -379,7 +329,6 @@ export default function Dashboard(){
 
   return(
     <div style={{background:BG,minHeight:"100vh",fontFamily:"'Plus Jakarta Sans',sans-serif",paddingBottom:40}}>
-      {/* NAV */}
       <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(255,255,255,0.97)",backdropFilter:"blur(16px)",borderBottom:`1px solid ${BORDER}`,padding:"0 clamp(16px,4vw,32px)",height:64,display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
         <button onClick={()=>nav("/")} style={{background:"none",border:`1px solid ${BORDER}`,color:MUTED,cursor:"pointer",fontSize:13,fontFamily:"inherit",padding:"6px 14px",borderRadius:8,fontWeight:500}}>← Home</button>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -389,15 +338,11 @@ export default function Dashboard(){
         <button onClick={handleLogout} style={{background:"none",border:`1px solid ${BORDER}`,color:MUTED,padding:"6px 14px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:500}}>Logout</button>
       </nav>
 
-      {/* HEADER */}
       <div style={{background:WHITE,borderBottom:`1px solid ${BORDER}`,padding:"24px clamp(16px,4vw,32px) 0",boxShadow:"0 1px 3px rgba(0,0,0,0.03)"}}>
         <div style={{maxWidth:900,margin:"0 auto"}}>
           <div style={{fontSize:11,color:GREEN,fontWeight:700,letterSpacing:"1px",marginBottom:4}}>DASHBOARD</div>
-          <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(22px,5vw,30px)",fontWeight:700,color:PRIMARY,marginBottom:4}}>
-            Welcome, {user?.displayName?.split(" ")[0]||"there"} 👋
-          </h1>
+          <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(22px,5vw,30px)",fontWeight:700,color:PRIMARY,marginBottom:4}}>Welcome, {user?.displayName?.split(" ")[0]||"there"} 👋</h1>
           <p style={{color:MUTED,fontSize:14,marginBottom:20}}>Find referrals, post openings, track everything.</p>
-
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
             {[{icon:"📋",label:"Applied",value:counts.applications,color:PRIMARY},{icon:"⚡",label:"Active",value:counts.active,color:"#3B82F6"},{icon:"📝",label:"My Posts",value:counts.myPosts,color:"#8B5CF6"},{icon:"🏆",label:"Hired",value:counts.hired,color:GREEN}].map(s=>(
               <div key={s.label} style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
@@ -407,7 +352,6 @@ export default function Dashboard(){
               </div>
             ))}
           </div>
-
           <div style={{display:"flex",gap:0,overflowX:"auto"}}>
             {[["applications","My Applications"],["myreferrals","My Referrals"],["postreferral","+ Post Referral"],["profile","Profile"]].map(([k,l])=>(
               <button key={k} onClick={()=>{setTab(k);setSelectedPost(null);}} style={{background:"none",border:"none",cursor:"pointer",padding:"10px 16px",fontSize:13,fontWeight:tab===k?700:500,color:tab===k?GREEN:MUTED,fontFamily:"inherit",borderBottom:`2px solid ${tab===k?GREEN:"transparent"}`,whiteSpace:"nowrap",transition:"all 0.2s"}}>{l}</button>
@@ -422,18 +366,15 @@ export default function Dashboard(){
         {tab==="applications"&&(
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
             <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"10px 14px",display:"flex",gap:8,alignItems:"center",fontSize:13,color:"#15803D"}}>
-              <span>💬</span>
-              <span>Click any application to <strong>add updates or ask questions</strong> directly to the employee.</span>
+              <span>💬</span><span>Click any application to <strong>add updates or ask questions</strong> directly to the employee.</span>
             </div>
             {apps.length===0?(
-              <Card>
-                <div style={{textAlign:"center",padding:"60px 20px"}}>
-                  <div style={{fontSize:48,marginBottom:14}}>📋</div>
-                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY,marginBottom:8}}>No applications yet</div>
-                  <div style={{fontSize:14,color:MUTED,marginBottom:20}}>Browse referrals and apply to get started</div>
-                  <button onClick={()=>nav("/browse")} style={{background:GREEN,border:"none",color:WHITE,padding:"12px 24px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals →</button>
-                </div>
-              </Card>
+              <Card><div style={{textAlign:"center",padding:"60px 20px"}}>
+                <div style={{fontSize:48,marginBottom:14}}>📋</div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY,marginBottom:8}}>No applications yet</div>
+                <div style={{fontSize:14,color:MUTED,marginBottom:20}}>Browse referrals and apply to get started</div>
+                <button onClick={()=>nav("/browse")} style={{background:GREEN,border:"none",color:WHITE,padding:"12px 24px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals →</button>
+              </div></Card>
             ):apps.map(app=>{
               const cfg=ST[app.status]||ST["Applied"];
               const isOpen=expanded===app.id;
@@ -458,7 +399,7 @@ export default function Dashboard(){
                         <div style={{fontSize:13,color:MUTED}}>Applied: <strong style={{color:TEXT}}>{app.appliedAt?.toDate?.()?.toLocaleDateString()||"Recently"}</strong></div>
                         {app.employeeName&&<div style={{fontSize:13,color:MUTED}}>Referred by: <strong style={{color:TEXT}}>{app.employeeName}</strong></div>}
                       </div>
-                      {app.status==="Referred"&&<div style={{margin:"0 18px 12px",background:GREENBG,border:"1px solid #BBF7D0",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#15803D"}}>🚀 Referred internally — employee has submitted your profile. Use comments below to stay updated.</div>}
+                      {app.status==="Referred"&&<div style={{margin:"0 18px 12px",background:GREENBG,border:"1px solid #BBF7D0",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#15803D"}}>🚀 Referred internally — use comments below to stay updated.</div>}
                       {app.status==="Rejected"&&<div style={{margin:"0 18px 12px",background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#DC2626"}}>Don't give up — keep applying! 💪</div>}
                       <CommentThread appId={app.id} currentUser={user} role="candidate"/>
                     </div>
@@ -478,16 +419,14 @@ export default function Dashboard(){
               <button onClick={()=>setTab("postreferral")} style={{background:GREEN,border:"none",color:WHITE,padding:"9px 18px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>+ New Post</button>
             </div>
             {myPosts.length===0?(
-              <Card>
-                <div style={{textAlign:"center",padding:"60px 20px"}}>
-                  <div style={{fontSize:48,marginBottom:14}}>📝</div>
-                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY,marginBottom:8}}>No referral posts yet</div>
-                  <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 16px",margin:"0 auto 20px",maxWidth:380,fontSize:13,color:"#15803D",lineHeight:1.7}}>
-                    💡 Your company already has a referral programme. RaYa helps you find the right candidate faster.
-                  </div>
-                  <button onClick={()=>setTab("postreferral")} style={{background:GREEN,border:"none",color:WHITE,padding:"12px 24px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Post Your First Referral →</button>
+              <Card><div style={{textAlign:"center",padding:"60px 20px"}}>
+                <div style={{fontSize:48,marginBottom:14}}>📝</div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY,marginBottom:8}}>No referral posts yet</div>
+                <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 16px",margin:"0 auto 20px",maxWidth:380,fontSize:13,color:"#15803D",lineHeight:1.7}}>
+                  💡 Your company already has a referral programme. RaYa helps you find the right candidate faster.
                 </div>
-              </Card>
+                <button onClick={()=>setTab("postreferral")} style={{background:GREEN,border:"none",color:WHITE,padding:"12px 24px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Post Your First Referral →</button>
+              </div></Card>
             ):myPosts.map(post=>{
               const dl=daysLeft(post.lastDate);
               const expired=post.status==="Closed"||(dl!==null&&dl<=0);
@@ -534,21 +473,19 @@ export default function Dashboard(){
           </div>
         )}
 
-        {/* APPLICANTS VIEW */}
+        {/* APPLICANTS */}
         {tab==="myreferrals"&&selectedPost&&(
           <div>
             <button onClick={()=>{setSelectedPost(null);setExpandedApp(null);}} style={{background:"none",border:`1px solid ${BORDER}`,color:MUTED,cursor:"pointer",fontSize:13,marginBottom:16,fontFamily:"inherit",padding:"7px 16px",borderRadius:8,fontWeight:500}}>← Back to Posts</button>
-            <Card style={{marginBottom:16}}>
-              <div style={{padding:"16px 18px"}}>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY}}>{selectedPost.role}</div>
-                <div style={{color:MUTED,fontSize:13,marginTop:4}}>{selectedPost.company}</div>
-              </div>
-            </Card>
+            <Card style={{marginBottom:16}}><div style={{padding:"16px 18px"}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY}}>{selectedPost.role}</div>
+              <div style={{color:MUTED,fontSize:13,marginTop:4}}>{selectedPost.company}</div>
+            </div></Card>
             <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:13,color:"#15803D",display:"flex",gap:8}}>
-              <span>💬</span><span>Click any applicant to <strong>view updates and send messages</strong> directly to them.</span>
+              <span>💬</span><span>Click any applicant to <strong>view updates and send messages</strong>.</span>
             </div>
             <div style={{fontSize:11,color:PRIMARY,fontWeight:700,letterSpacing:"1px",marginBottom:12}}>APPLICANTS</div>
-            {loadingApps?<Loader text="Loading applicants..."/>:applicants.length===0?(
+            {loadingApps?<Loader text="Loading..."/>:applicants.length===0?(
               <Card><div style={{textAlign:"center",padding:"40px 20px",color:MUTED}}><div style={{fontSize:36,marginBottom:10}}>👥</div><div style={{color:TEXT,fontSize:15,fontWeight:600}}>No applicants yet</div></div></Card>
             ):applicants.map(app=>{
               const cfg=ST[app.status]||ST["Applied"];
@@ -573,7 +510,7 @@ export default function Dashboard(){
                         ))}
                       </div>
                     )}
-                    {app.status==="Referred"&&<div style={{background:"#F5F3FF",border:"1px solid #DDD6FE",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#8B5CF6"}}>🚀 Referred — your company's HR team will take it from here.</div>}
+                    {app.status==="Referred"&&<div style={{background:"#F5F3FF",border:"1px solid #DDD6FE",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#8B5CF6"}}>🚀 Referred — HR team will take it from here.</div>}
                     {app.status==="Hired"&&<div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#15803D"}}>🏆 Hired! Check with HR about your referral reward.</div>}
                   </div>
                   {isOpen&&<div style={{borderTop:`1px solid ${BORDER}`,background:BG}}><CommentThread appId={app.id} currentUser={user} role="employee"/></div>}
@@ -585,145 +522,122 @@ export default function Dashboard(){
 
         {/* POST REFERRAL */}
         {tab==="postreferral"&&(
-          <Card>
-            <div style={{padding:28}}>
-              <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:700,color:PRIMARY,marginBottom:4}}>Post a Referral</h2>
-              <p style={{color:MUTED,fontSize:14,marginBottom:16}}>Help someone get hired through your company's referral programme.</p>
-              <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 14px",marginBottom:20,display:"flex",gap:10}}>
-                <span style={{fontSize:18,flexShrink:0}}>💡</span>
-                <div>
-                  <div style={{color:"#15803D",fontWeight:700,fontSize:13,marginBottom:4}}>Why post on RaYa?</div>
-                  <div style={{color:MUTED,fontSize:13,lineHeight:1.7}}>Your company already rewards you when someone you refer gets hired. RaYa helps you find the right candidate faster.</div>
-                </div>
+          <Card><div style={{padding:28}}>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:700,color:PRIMARY,marginBottom:4}}>Post a Referral</h2>
+            <p style={{color:MUTED,fontSize:14,marginBottom:16}}>Help someone get hired through your company's referral programme.</p>
+            <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 14px",marginBottom:20,display:"flex",gap:10}}>
+              <span style={{fontSize:18,flexShrink:0}}>💡</span>
+              <div>
+                <div style={{color:"#15803D",fontWeight:700,fontSize:13,marginBottom:4}}>Why post on RaYa?</div>
+                <div style={{color:MUTED,fontSize:13,lineHeight:1.7}}>Your company already rewards you when someone you refer gets hired. RaYa helps you find the right candidate faster — so your referral actually succeeds.</div>
               </div>
-              {postError&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",color:"#DC2626",fontSize:13,marginBottom:16}}>{postError}</div>}
-              <div style={{display:"grid",gap:16}}>
-                <Inp label="Your Company *" placeholder="Amazon, Cognizant, TCS…" value={j.company} onChange={e=>sj("company",e.target.value)}/>
-                <Inp label="Job Title *" placeholder="Senior Java Developer" value={j.role} onChange={e=>sj("role",e.target.value)}/>
-                <SkillSelector skills={postSkills} setSkills={setPostSkills}/>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                  <Inp label="Min Exp (yrs)" placeholder="e.g. 3" value={j.expMin} onChange={e=>sj("expMin",e.target.value)}/>
-                  <Inp label="Max Exp (yrs)" placeholder="e.g. 7" value={j.expMax} onChange={e=>sj("expMax",e.target.value)}/>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                  <Inp label="CTC Min (LPA)" placeholder="e.g. 8" value={j.ctcMin} onChange={e=>sj("ctcMin",e.target.value)}/>
-                  <Inp label="CTC Max (LPA)" placeholder="e.g. 14" value={j.ctcMax} onChange={e=>sj("ctcMax",e.target.value)}/>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                  <Inp label="Referral Slots" placeholder="e.g. 2" value={j.slots} onChange={e=>sj("slots",e.target.value)}/>
-                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                    <label style={{fontSize:11,fontWeight:700,color:PRIMARY}}>Last Date *</label>
-                    <input type="date" value={j.lastDate} onChange={e=>sj("lastDate",e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                      style={{background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"11px 14px",color:TEXT,fontSize:14,outline:"none",fontFamily:"inherit"}}
-                      onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
-                    <span style={{fontSize:11,color:MUTED}}>Post auto-closes on this date.</span>
-                  </div>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                  <label style={{fontSize:11,fontWeight:700,color:PRIMARY}}>Job Description</label>
-                  <textarea
-                    placeholder="Describe the role and what you're looking for in a candidate…"
-                    value={j.desc}
-                    onChange={e=>sj("desc",e.target.value)}
-                    rows={4}
-                    style={{background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"11px 14px",color:TEXT,fontSize:14,outline:"none",fontFamily:"inherit",resize:"vertical",lineHeight:1.6}}
-                    onFocus={e=>e.target.style.borderColor=GREEN}
-                    onBlur={e=>e.target.style.borderColor=BORDER}
-                  />
-                </div>
-              </div>
-              <button onClick={handlePostReferral} disabled={posting}
-                style={{marginTop:20,width:"100%",background:GREEN,border:"none",color:WHITE,padding:"13px",borderRadius:10,fontSize:15,fontWeight:700,cursor:posting?"not-allowed":"pointer",fontFamily:"inherit",opacity:posting?0.7:1}}>
-                {posting?"Posting...":"Post Referral ✦"}
-              </button>
-              <div style={{marginTop:10,fontSize:12,color:MUTED,textAlign:"center"}}>First month free. ₹199/month after that.</div>
             </div>
-          </Card>
+            {postError&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",color:"#DC2626",fontSize:13,marginBottom:16}}>{postError}</div>}
+            <div style={{display:"grid",gap:16}}>
+              <Inp label="Your Company *" placeholder="Amazon, Cognizant, TCS…" value={j.company} onChange={e=>sj("company",e.target.value)}/>
+              <Inp label="Job Title *" placeholder="Senior Java Developer" value={j.role} onChange={e=>sj("role",e.target.value)}/>
+              <SkillSelector skills={postSkills} setSkills={setPostSkills}/>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                <Inp label="Min Exp (yrs)" placeholder="e.g. 3" value={j.expMin} onChange={e=>sj("expMin",e.target.value)}/>
+                <Inp label="Max Exp (yrs)" placeholder="e.g. 7" value={j.expMax} onChange={e=>sj("expMax",e.target.value)}/>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                <Inp label="CTC Min (LPA)" placeholder="e.g. 8" value={j.ctcMin} onChange={e=>sj("ctcMin",e.target.value)}/>
+                <Inp label="CTC Max (LPA)" placeholder="e.g. 14" value={j.ctcMax} onChange={e=>sj("ctcMax",e.target.value)}/>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                <Inp label="Referral Slots" placeholder="e.g. 2" value={j.slots} onChange={e=>sj("slots",e.target.value)}/>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  <label style={{fontSize:11,fontWeight:700,color:PRIMARY}}>Last Date *</label>
+                  <input type="date" value={j.lastDate} onChange={e=>sj("lastDate",e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    style={{background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"11px 14px",color:TEXT,fontSize:14,outline:"none",fontFamily:"inherit"}}
+                    onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
+                  <span style={{fontSize:11,color:MUTED}}>Post auto-closes on this date.</span>
+                </div>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <label style={{fontSize:11,fontWeight:700,color:PRIMARY}}>Job Description</label>
+                <textarea placeholder="Describe the role and what you're looking for…" value={j.desc} onChange={e=>sj("desc",e.target.value)} rows={4}
+                  style={{background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"11px 14px",color:TEXT,fontSize:14,outline:"none",fontFamily:"inherit",resize:"vertical",lineHeight:1.6}}
+                  onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
+              </div>
+            </div>
+            <button onClick={handlePostReferral} disabled={posting}
+              style={{marginTop:20,width:"100%",background:GREEN,border:"none",color:WHITE,padding:"13px",borderRadius:10,fontSize:15,fontWeight:700,cursor:posting?"not-allowed":"pointer",fontFamily:"inherit",opacity:posting?0.7:1}}>
+              {posting?"Posting...":"Post Referral ✦"}
+            </button>
+          </div></Card>
         )}
 
         {/* PROFILE */}
         {tab==="profile"&&(
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            <Card>
-              <div style={{padding:24}}>
-                <div style={{display:"flex",gap:16,alignItems:"center",marginBottom:20}}>
-                  <div style={{width:56,height:56,borderRadius:"50%",background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:24,color:WHITE,flexShrink:0}}>
-                    {user?.displayName?.charAt(0)||"U"}
-                  </div>
-                  <div>
-                    <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY}}>{user?.displayName}</div>
-                    <div style={{color:MUTED,fontSize:13,marginTop:2}}>{user?.email}</div>
-                    <div style={{marginTop:6,display:"flex",gap:6}}>
-                      <Badge color={GREEN}>Active</Badge>
-                      <Badge color="#3B82F6">Free Trial</Badge>
-                    </div>
-                  </div>
+            <Card><div style={{padding:24}}>
+              <div style={{display:"flex",gap:16,alignItems:"center",marginBottom:20}}>
+                <div style={{width:56,height:56,borderRadius:"50%",background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:24,color:WHITE,flexShrink:0}}>
+                  {user?.displayName?.charAt(0)||"U"}
                 </div>
-                {userProfile&&(
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:10,marginBottom:20,padding:"14px",background:BG,borderRadius:10,border:`1px solid ${BORDER}`}}>
-                    {[["Experience",userProfile.experience],["Current Company",userProfile.currentCompany],["Job Title",userProfile.currentTitle],["City",userProfile.city],["Primary Skill",userProfile.primarySkill],["Notice Period",userProfile.noticePeriod]].filter(([,v])=>v).map(([l,v])=>(
-                      <div key={l}>
-                        <div style={{fontSize:10,color:MUTED,fontWeight:600,marginBottom:2,textTransform:"uppercase",letterSpacing:"0.5px"}}>{l}</div>
-                        <div style={{fontSize:13,color:TEXT,fontWeight:500}}>{v}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
-                  {[["Applications",apps.length],["My Posts",myPosts.length],["Hired",counts.hired]].map(([l,v])=>(
-                    <div key={l} style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:10,padding:"12px",textAlign:"center"}}>
-                      <div style={{fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:700,color:PRIMARY}}>{v}</div>
-                      <div style={{color:MUTED,fontSize:12,marginTop:2,fontWeight:500}}>{l}</div>
+                <div>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:PRIMARY}}>{user?.displayName}</div>
+                  <div style={{color:MUTED,fontSize:13,marginTop:2}}>{user?.email}</div>
+                  <div style={{marginTop:6}}><Badge color={GREEN}>Active</Badge></div>
+                </div>
+              </div>
+              {userProfile&&(
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:10,marginBottom:20,padding:"14px",background:BG,borderRadius:10,border:`1px solid ${BORDER}`}}>
+                  {[["Experience",userProfile.experience],["Current Company",userProfile.currentCompany],["Job Title",userProfile.currentTitle],["City",userProfile.city],["Primary Skill",userProfile.primarySkill],["Notice Period",userProfile.noticePeriod]].filter(([,v])=>v).map(([l,v])=>(
+                    <div key={l}>
+                      <div style={{fontSize:10,color:MUTED,fontWeight:600,marginBottom:2,textTransform:"uppercase",letterSpacing:"0.5px"}}>{l}</div>
+                      <div style={{fontSize:13,color:TEXT,fontWeight:500}}>{v}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:12,padding:"16px 18px",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center",gap:12}}>
-                  <div>
-                    <div style={{color:"#15803D",fontWeight:700,fontSize:14,marginBottom:2}}>Upgrade to ₹199/month</div>
-                    <div style={{color:MUTED,fontSize:13}}>Unlimited applications + unlimited referral posts</div>
+              )}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+                {[["Applications",apps.length],["My Posts",myPosts.length],["Hired",counts.hired]].map(([l,v])=>(
+                  <div key={l} style={{background:BG,border:`1px solid ${BORDER}`,borderRadius:10,padding:"12px",textAlign:"center"}}>
+                    <div style={{fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:700,color:PRIMARY}}>{v}</div>
+                    <div style={{color:MUTED,fontSize:12,marginTop:2,fontWeight:500}}>{l}</div>
                   </div>
-                  <button style={{background:GREEN,border:"none",color:WHITE,padding:"9px 18px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Upgrade</button>
-                </div>
+                ))}
               </div>
-            </Card>
+            </div></Card>
 
             {/* RESUME */}
-            <Card>
-              <div style={{padding:24}}>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,color:PRIMARY,marginBottom:4}}>Resume</div>
-                <p style={{color:MUTED,fontSize:13,marginBottom:16}}>Upload, view or update your resume. Employees will see this when you apply.</p>
-                {resumeMsg&&(
-                  <div style={{background:resumeMsg.startsWith("✓")?GREENBG:"#FEF2F2",border:`1px solid ${resumeMsg.startsWith("✓")?"#BBF7D0":"#FECACA"}`,borderRadius:8,padding:"10px 14px",color:resumeMsg.startsWith("✓")?"#15803D":"#DC2626",fontSize:13,marginBottom:14}}>
-                    {resumeMsg}
+            <Card><div style={{padding:24}}>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,color:PRIMARY,marginBottom:4}}>Resume</div>
+              <p style={{color:MUTED,fontSize:13,marginBottom:16}}>Upload, view or update your resume. Employees will see this when you apply.</p>
+              {resumeMsg&&(
+                <div style={{background:resumeMsg.startsWith("✓")?GREENBG:"#FEF2F2",border:`1px solid ${resumeMsg.startsWith("✓")?"#BBF7D0":"#FECACA"}`,borderRadius:8,padding:"10px 14px",color:resumeMsg.startsWith("✓")?"#15803D":"#DC2626",fontSize:13,marginBottom:14}}>
+                  {resumeMsg}
+                </div>
+              )}
+              {userProfile?.resumeURL?(
+                <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:12,padding:16,display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+                  <div style={{width:44,height:44,borderRadius:10,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>📄</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:600,color:TEXT,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{userProfile.resumeName||"resume.pdf"}</div>
+                    <div style={{color:MUTED,fontSize:12,marginTop:2}}>Uploaded • PDF</div>
                   </div>
-                )}
-                {userProfile?.resumeURL?(
-                  <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:12,padding:16,display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
-                    <div style={{width:44,height:44,borderRadius:10,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>📄</div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:600,color:TEXT,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{userProfile.resumeName||"resume.pdf"}</div>
-                      <div style={{color:MUTED,fontSize:12,marginTop:2}}>Uploaded • PDF</div>
-                    </div>
-                    <div style={{display:"flex",gap:8,flexShrink:0}}>
-                      <a href={userProfile.resumeURL} target="_blank" rel="noreferrer" style={{background:GREEN,border:"none",color:WHITE,padding:"8px 16px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",textDecoration:"none",display:"inline-block"}}>View ↗</a>
-                      <label style={{background:WHITE,border:`1px solid ${BORDER}`,color:PRIMARY,padding:"8px 16px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
-                        <input type="file" accept=".pdf" onChange={e=>e.target.files[0]&&handleResumeUpload(e.target.files[0])} style={{display:"none"}}/>
-                        Replace
-                      </label>
-                      <button onClick={handleResumeDelete} disabled={resumeUploading} style={{background:"#FEF2F2",border:"1px solid #FECACA",color:"#DC2626",padding:"8px 14px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Delete</button>
-                    </div>
+                  <div style={{display:"flex",gap:8,flexShrink:0}}>
+                    <a href={userProfile.resumeURL} target="_blank" rel="noreferrer" style={{background:GREEN,border:"none",color:WHITE,padding:"8px 16px",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",textDecoration:"none",display:"inline-block"}}>View ↗</a>
+                    <label style={{background:WHITE,border:`1px solid ${BORDER}`,color:PRIMARY,padding:"8px 16px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                      <input type="file" accept=".pdf" onChange={e=>e.target.files[0]&&handleResumeUpload(e.target.files[0])} style={{display:"none"}}/>Replace
+                    </label>
+                    <button onClick={handleResumeDelete} disabled={resumeUploading} style={{background:"#FEF2F2",border:"1px solid #FECACA",color:"#DC2626",padding:"8px 14px",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Delete</button>
                   </div>
-                ):(
-                  <label style={{border:`2px dashed ${BORDER}`,borderRadius:12,padding:28,textAlign:"center",cursor:"pointer",background:BG,display:"block"}}>
-                    <input type="file" accept=".pdf" onChange={e=>e.target.files[0]&&handleResumeUpload(e.target.files[0])} style={{display:"none"}}/>
-                    <div style={{fontSize:36,marginBottom:10}}>{resumeUploading?"⏳":"📄"}</div>
-                    <div style={{color:TEXT,fontSize:14,fontWeight:600,marginBottom:4}}>{resumeUploading?"Uploading...":"Click to upload your Resume"}</div>
-                    <div style={{color:MUTED,fontSize:12}}>PDF only • Max 5MB</div>
-                  </label>
-                )}
-              </div>
-            </Card>
+                </div>
+              ):(
+                <label style={{border:`2px dashed ${BORDER}`,borderRadius:12,padding:28,textAlign:"center",cursor:"pointer",background:BG,display:"block"}}>
+                  <input type="file" accept=".pdf" onChange={e=>e.target.files[0]&&handleResumeUpload(e.target.files[0])} style={{display:"none"}}/>
+                  <div style={{fontSize:36,marginBottom:10}}>{resumeUploading?"⏳":"📄"}</div>
+                  <div style={{color:TEXT,fontSize:14,fontWeight:600,marginBottom:4}}>{resumeUploading?"Uploading...":"Click to upload your Resume"}</div>
+                  <div style={{color:MUTED,fontSize:12}}>PDF only • Max 5MB</div>
+                </label>
+              )}
+            </div></Card>
+
             <button onClick={handleLogout} style={{width:"100%",background:"none",border:"1.5px solid #FECACA",color:"#DC2626",padding:"12px",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Logout</button>
           </div>
         )}

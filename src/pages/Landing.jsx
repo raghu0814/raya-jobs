@@ -5,7 +5,6 @@ import { useState, useEffect, useRef } from "react";
 const PRIMARY="#1A2E4A",GREEN="#22C55E",GREENBG="#F0FDF4";
 const BG="#FFFFFF",BG2="#F8FAFC",BORDER="#E2E8F0",TEXT="#0F172A",MUTED="#64748B";
 
-// ── SVG ILLUSTRATIONS ─────────────────────────────────────
 const IlluPost=()=>(
   <svg viewBox="0 0 180 140" fill="none" style={{width:"100%",maxWidth:160}}>
     <rect x="10" y="10" width="160" height="120" rx="16" fill="#EFF6FF" stroke="#BFDBFE" strokeWidth="1.5"/>
@@ -120,7 +119,7 @@ const Check=({text,color=GREEN,bg=GREENBG})=>(
   </div>
 );
 const StepCard=({num,title,desc,Illus,color})=>(
-  <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:20,padding:24,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",transition:"transform 0.2s,box-shadow 0.2s",cursor:"default"}}
+  <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:20,padding:24,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",transition:"transform 0.2s,box-shadow 0.2s"}}
     onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow="0 12px 40px rgba(15,23,42,0.08)";}}
     onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="";}}>
     <div style={{width:44,height:44,borderRadius:"50%",background:color+"18",border:`2px solid ${color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,color,marginBottom:14}}>{num}</div>
@@ -144,20 +143,13 @@ export default function Landing(){
   const nav=useNavigate();
   const user=auth.currentUser;
   const[scrolled,setScrolled]=useState(false);
-
-  // Section refs for scroll navigation
   const howItWorksRef=useRef(null);
-  const pricingRef=useRef(null);
 
   useEffect(()=>{
     const h=()=>setScrolled(window.scrollY>20);
     window.addEventListener("scroll",h);
     return()=>window.removeEventListener("scroll",h);
   },[]);
-
-  const scrollTo=(ref)=>{
-    ref.current?.scrollIntoView({behavior:"smooth",block:"start"});
-  };
 
   const companies=["TCS","Infosys","Wipro","Accenture","Amazon","Microsoft","Cognizant","HCL","Swiggy","Zomato","PhonePe","Flipkart","Razorpay","CRED","Meesho"];
 
@@ -185,8 +177,7 @@ export default function Landing(){
         </div>
         <div style={{display:"flex",alignItems:"center",gap:24}}>
           <span className="nav-link" onClick={()=>nav("/browse")} style={{color:MUTED,fontSize:13,fontWeight:500}}>Browse Jobs</span>
-          <span className="nav-link" onClick={()=>scrollTo(howItWorksRef)} style={{color:MUTED,fontSize:13,fontWeight:500}}>How it Works</span>
-          <span className="nav-link" onClick={()=>scrollTo(pricingRef)} style={{color:MUTED,fontSize:13,fontWeight:500}}>Pricing</span>
+          <span className="nav-link" onClick={()=>howItWorksRef.current?.scrollIntoView({behavior:"smooth"})} style={{color:MUTED,fontSize:13,fontWeight:500}}>How it Works</span>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {user?(
@@ -216,13 +207,13 @@ export default function Landing(){
           <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:32}}>
             <Pill>5x higher chance of getting hired</Pill>
             <Pill>Direct employee contact</Pill>
-            <Pill>1 month free trial</Pill>
+            <Pill>100% Free to use</Pill>
           </div>
           <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
             <button className="cta-btn" onClick={()=>nav("/register")} style={{background:GREEN,border:"none",color:"white",padding:"13px 30px",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started Free →</button>
             <button onClick={()=>nav("/browse")} style={{background:"none",border:`2px solid ${BORDER}`,color:PRIMARY,padding:"13px 26px",borderRadius:12,fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals</button>
           </div>
-          <p style={{color:MUTED,fontSize:12,marginTop:12}}>First month completely free. No credit card needed.</p>
+          <p style={{color:MUTED,fontSize:12,marginTop:12}}>Free to use. No credit card needed.</p>
         </div>
         <div className="hero-img" style={{display:"flex",justifyContent:"center"}}><HeroIllus/></div>
       </section>
@@ -298,7 +289,6 @@ export default function Landing(){
               <button className="cta-btn" onClick={()=>nav("/register")} style={{width:"100%",background:PRIMARY,border:"none",color:"white",padding:"13px",borderRadius:11,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Post a Referral →</button>
             </div>
           </div>
-          {/* Clarity box */}
           <div style={{marginTop:20,background:"white",border:`1px solid ${BORDER}`,borderRadius:16,padding:"24px 28px",display:"flex",gap:16,alignItems:"flex-start"}}>
             <div style={{width:44,height:44,borderRadius:12,background:GREENBG,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>💡</div>
             <div>
@@ -322,42 +312,6 @@ export default function Landing(){
         </div>
       </section>
 
-      {/* PRICING */}
-      <section ref={pricingRef} style={{background:BG2,padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)",scrollMarginTop:80}}>
-        <div style={{maxWidth:860,margin:"0 auto",textAlign:"center"}}>
-          <div style={{display:"inline-block",background:GREENBG,border:"1px solid #BBF7D0",borderRadius:100,padding:"5px 14px",fontSize:11,color:"#15803D",fontWeight:700,letterSpacing:"1px",marginBottom:14}}>PRICING</div>
-          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(24px,5vw,40px)",fontWeight:800,color:PRIMARY,marginBottom:10}}>Simple, Honest Pricing</h2>
-          <p style={{color:MUTED,fontSize:15,marginBottom:44}}>Start free for 1 month. Upgrade when you're ready.</p>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:18}}>
-            {/* Free */}
-            <div style={{background:"white",border:`1px solid ${BORDER}`,borderRadius:22,padding:30,textAlign:"left"}}>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY,marginBottom:4}}>Free Trial</div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:38,fontWeight:800,color:PRIMARY,marginBottom:4}}>₹0</div>
-              <div style={{color:MUTED,fontSize:12,marginBottom:20}}>First 1 month free</div>
-              {["Unlimited job applications","Unlimited referral posts","Profile & resume","Application tracking","Comment & messaging system"].map(f=>(
-                <div key={f} style={{display:"flex",gap:8,alignItems:"center",fontSize:13,color:TEXT,marginBottom:9}}>
-                  <span style={{color:GREEN,fontWeight:700}}>✓</span>{f}
-                </div>
-              ))}
-              <button onClick={()=>nav("/register")} style={{marginTop:18,width:"100%",background:"none",border:`2px solid ${BORDER}`,color:PRIMARY,padding:"11px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started Free</button>
-            </div>
-            {/* Pro */}
-            <div style={{background:PRIMARY,borderRadius:22,padding:30,textAlign:"left",position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:14,right:14,background:GREEN,color:"white",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:100}}>POPULAR</div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"white",marginBottom:4}}>Pro</div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:38,fontWeight:800,color:"white",marginBottom:4}}>₹199</div>
-              <div style={{color:"rgba(255,255,255,0.6)",fontSize:12,marginBottom:20}}>per month</div>
-              {["Unlimited job applications","Unlimited referral posts","Smart candidate routing","Priority listing","Resume storage","Full messaging system"].map(f=>(
-                <div key={f} style={{display:"flex",gap:8,alignItems:"center",fontSize:13,color:"rgba(255,255,255,0.9)",marginBottom:9}}>
-                  <span style={{color:GREEN,fontWeight:700}}>✓</span>{f}
-                </div>
-              ))}
-              <button className="cta-btn" onClick={()=>nav("/register")} style={{marginTop:18,width:"100%",background:GREEN,border:"none",color:"white",padding:"11px",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Get Started →</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* BOTTOM CTA */}
       <section style={{background:`linear-gradient(135deg,${PRIMARY} 0%,#0F3460 100%)`,padding:"clamp(56px,7vw,96px) clamp(16px,4vw,48px)",textAlign:"center"}}>
         <div style={{maxWidth:560,margin:"0 auto"}}>
@@ -369,7 +323,7 @@ export default function Landing(){
             <button className="cta-btn" onClick={()=>nav("/register")} style={{background:GREEN,border:"none",color:"white",padding:"14px 36px",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Join RaYa Free →</button>
             <button onClick={()=>nav("/browse")} style={{background:"transparent",border:"2px solid rgba(255,255,255,0.3)",color:"white",padding:"14px 28px",borderRadius:12,fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Browse Referrals</button>
           </div>
-          <p style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:18}}>First month free • No credit card needed</p>
+          <p style={{color:"rgba(255,255,255,0.4)",fontSize:11,marginTop:18}}>Free to use • No credit card needed</p>
         </div>
       </section>
 
