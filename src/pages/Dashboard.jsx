@@ -608,6 +608,15 @@ export default function Dashboard(){
             <Card><div style={{padding:24}}>
               <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,color:PRIMARY,marginBottom:4}}>Resume</div>
               <p style={{color:MUTED,fontSize:13,marginBottom:16}}>Upload, view or update your resume. Employees will see this when you apply.</p>
+              {/* OPTIMIZER BANNER */}
+              <div style={{background:`linear-gradient(135deg,${PRIMARY} 0%,#0F3460 100%)`,borderRadius:14,padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap",marginBottom:16}}>
+                <div>
+                  <div style={{color:GREEN,fontWeight:700,fontSize:11,marginBottom:3}}>⚡ AI POWERED</div>
+                  <div style={{color:"white",fontWeight:700,fontSize:15,marginBottom:2}}>Resume Optimizer</div>
+                  <div style={{color:"rgba(255,255,255,0.7)",fontSize:12}}>Score your resume • Get to 90+ ATS pass rate</div>
+                </div>
+                <button onClick={()=>nav("/resume-optimizer")} style={{background:GREEN,border:"none",color:"white",padding:"9px 18px",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Optimize Now →</button>
+              </div>
               {resumeMsg&&(
                 <div style={{background:resumeMsg.startsWith("✓")?GREENBG:"#FEF2F2",border:`1px solid ${resumeMsg.startsWith("✓")?"#BBF7D0":"#FECACA"}`,borderRadius:8,padding:"10px 14px",color:resumeMsg.startsWith("✓")?"#15803D":"#DC2626",fontSize:13,marginBottom:14}}>
                   {resumeMsg}

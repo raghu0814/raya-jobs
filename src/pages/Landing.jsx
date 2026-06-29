@@ -37,6 +37,7 @@ export default function Landing(){
         <div style={{display:"flex",alignItems:"center",gap:24}}>
           <span onClick={()=>nav("/browse")} style={{color:MUTED,fontSize:13,fontWeight:500,cursor:"pointer"}}>Browse Jobs</span>
           <span onClick={()=>howItWorksRef.current?.scrollIntoView({behavior:"smooth"})} style={{color:MUTED,fontSize:13,fontWeight:500,cursor:"pointer"}}>How it Works</span>
+          <span onClick={()=>nav("/resume-optimizer")} style={{color:MUTED,fontSize:13,fontWeight:500,cursor:"pointer"}}>Resume Score</span>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {user?(

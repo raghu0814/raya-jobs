@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Browse from "./pages/Browse";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import ResumeOptimizer from "./pages/ResumeOptimizer";
 import Loader from "./components/Loader";
 
 function ProtectedRoute({ children }) {
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/browse" element={<Browse />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+        <Route path="/resume-optimizer" element={<ResumeOptimizer />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
