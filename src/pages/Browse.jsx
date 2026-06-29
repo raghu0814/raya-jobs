@@ -98,7 +98,7 @@ export default function Browse(){
         <button onClick={()=>nav("/")} style={{background:"none",border:`1px solid ${BORDER}`,color:MUTED,cursor:"pointer",fontSize:13,fontFamily:"inherit",padding:"6px 14px",borderRadius:8,fontWeight:500}}>← Home</button>
         <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>nav("/")}>
           <div style={{width:30,height:30,borderRadius:8,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🤝</div>
-          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,color:PRIMARY}}>RaYa Jobs</span>
+          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,color:PRIMARY}}>Rytaine Jobs</span>
         </div>
         <button onClick={()=>nav(auth.currentUser?"/dashboard":"/login")} style={{background:GREEN,border:"none",color:WHITE,padding:"8px 18px",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
           {auth.currentUser?"Dashboard →":"Login"}

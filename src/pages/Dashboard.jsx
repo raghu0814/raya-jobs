@@ -333,7 +333,7 @@ export default function Dashboard(){
         <button onClick={()=>nav("/")} style={{background:"none",border:`1px solid ${BORDER}`,color:MUTED,cursor:"pointer",fontSize:13,fontFamily:"inherit",padding:"6px 14px",borderRadius:8,fontWeight:500}}>← Home</button>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{width:30,height:30,borderRadius:8,background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🤝</div>
-          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,color:PRIMARY}}>RaYa Jobs</span>
+          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,color:PRIMARY}}>Rytaine Jobs</span>
         </div>
         <button onClick={handleLogout} style={{background:"none",border:`1px solid ${BORDER}`,color:MUTED,padding:"6px 14px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"inherit",fontWeight:500}}>Logout</button>
       </nav>
@@ -423,7 +423,7 @@ export default function Dashboard(){
                 <div style={{fontSize:48,marginBottom:14}}>📝</div>
                 <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:PRIMARY,marginBottom:8}}>No referral posts yet</div>
                 <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 16px",margin:"0 auto 20px",maxWidth:380,fontSize:13,color:"#15803D",lineHeight:1.7}}>
-                  💡 Your company already has a referral programme. RaYa helps you find the right candidate faster.
+                  💡 Your company already has a referral programme. Rytaine helps you find the right candidate faster.
                 </div>
                 <button onClick={()=>setTab("postreferral")} style={{background:GREEN,border:"none",color:WHITE,padding:"12px 24px",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Post Your First Referral →</button>
               </div></Card>
@@ -528,8 +528,8 @@ export default function Dashboard(){
             <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 14px",marginBottom:20,display:"flex",gap:10}}>
               <span style={{fontSize:18,flexShrink:0}}>💡</span>
               <div>
-                <div style={{color:"#15803D",fontWeight:700,fontSize:13,marginBottom:4}}>Why post on RaYa?</div>
-                <div style={{color:MUTED,fontSize:13,lineHeight:1.7}}>Your company already rewards you when someone you refer gets hired. RaYa helps you find the right candidate faster — so your referral actually succeeds.</div>
+                <div style={{color:"#15803D",fontWeight:700,fontSize:13,marginBottom:4}}>Why post on Rytaine?</div>
+                <div style={{color:MUTED,fontSize:13,lineHeight:1.7}}>Your company already rewards you when someone you refer gets hired. Rytaine helps you find the right candidate faster — so your referral actually succeeds.</div>
               </div>
             </div>
             {postError&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",color:"#DC2626",fontSize:13,marginBottom:16}}>{postError}</div>}

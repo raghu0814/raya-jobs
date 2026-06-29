@@ -8,20 +8,9 @@ import NavBar from "../components/NavBar";
 
 const PRIMARY="#1A2E4A",GREEN="#22C55E",BG="#F8FAFC",WHITE="#FFFFFF",BORDER="#E2E8F0",TEXT="#0F172A",MUTED="#64748B",GREENBG="#F0FDF4",BG2="#F8FAFC";
 
-const allSkills=[
-  "Java","Python","React","Angular","Vue.js","Node.js",
-  "Spring Boot","Microservices","Kafka","Docker","Kubernetes",
-  "AWS","Azure","GCP","DevOps","CI/CD","Terraform",
-  "SQL","MongoDB","PostgreSQL","Redis","Elasticsearch",
-  "SAP SD","SAP MM","SAP FICO","SAP BTP","S/4HANA",
-  "Salesforce","ServiceNow","Workday",
-  ".NET","C#","C++","Go","Rust","TypeScript",
-  "React Native","Flutter","Android","iOS","Swift","Kotlin",
-  "Machine Learning","Data Science","Power BI","Tableau",
-  "Selenium","Cypress","Jest","JUnit",
-  "Linux","Networking","Cybersecurity","Blockchain","Unity"
-];
+const allSkills=["Java","Python","React","Angular","Vue.js","Node.js","Spring Boot","Microservices","Kafka","Docker","Kubernetes","AWS","Azure","GCP","DevOps","CI/CD","Terraform","SQL","MongoDB","PostgreSQL","Redis","Elasticsearch","SAP SD","SAP MM","SAP FICO","SAP BTP","S/4HANA","Salesforce","ServiceNow","Workday",".NET","C#","C++","Go","Rust","TypeScript","React Native","Flutter","Android","iOS","Swift","Kotlin","Machine Learning","Data Science","Power BI","Tableau","Selenium","Cypress","Jest","JUnit","Linux","Networking","Cybersecurity","Blockchain","Unity"];
 
+// ── All components defined OUTSIDE to prevent cursor bug ──
 const Inp=({label,placeholder,type="text",value,onChange,hint})=>(
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
     <label style={{fontSize:11,fontWeight:700,color:PRIMARY,letterSpacing:"0.5px"}}>{label}</label>
@@ -47,7 +36,6 @@ const Sel=({label,options,value,onChange})=>(
 function SkillSelector({skills,setSkills,exclude}){
   const[input,setInput]=useState("");
   const add=(s)=>{const v=s.trim();if(v&&!skills.includes(v))setSkills(p=>[...p,v]);};
-  const handleKey=(e)=>{if(e.key==="Enter"&&input.trim()){add(input);setInput("");}};
   return(
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
       <label style={{fontSize:11,fontWeight:700,color:PRIMARY,letterSpacing:"0.5px"}}>Other Skills</label>
@@ -55,14 +43,15 @@ function SkillSelector({skills,setSkills,exclude}){
         <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
           {skills.map(s=>(
             <span key={s} onClick={()=>setSkills(p=>p.filter(x=>x!==s))}
-              style={{background:GREENBG,border:"1px solid #BBF7D0",color:"#15803D",padding:"4px 10px",borderRadius:100,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontWeight:500}}>
-              {s} <span style={{fontSize:10,color:"#86EFAC"}}>✕</span>
+              style={{background:GREENBG,border:"1px solid #BBF7D0",color:"#15803D",padding:"4px 10px",borderRadius:100,fontSize:12,cursor:"pointer",fontWeight:500}}>
+              {s} ✕
             </span>
           ))}
         </div>
       )}
       <div style={{display:"flex",gap:8}}>
-        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey}
+        <input value={input} onChange={e=>setInput(e.target.value)}
+          onKeyDown={e=>{if(e.key==="Enter"&&input.trim()){add(input);setInput("");}}}
           placeholder="Type any skill and press Enter…"
           style={{flex:1,background:WHITE,border:`1.5px solid ${BORDER}`,borderRadius:10,padding:"10px 14px",color:TEXT,fontSize:13,outline:"none",fontFamily:"inherit"}}
           onFocus={e=>e.target.style.borderColor=GREEN} onBlur={e=>e.target.style.borderColor=BORDER}/>
@@ -72,16 +61,14 @@ function SkillSelector({skills,setSkills,exclude}){
       <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
         {allSkills.filter(s=>!skills.includes(s)&&s!==exclude).map(s=>(
           <span key={s} onClick={()=>add(s)}
-            style={{background:BG2,border:`1px solid ${BORDER}`,color:MUTED,padding:"4px 10px",borderRadius:100,fontSize:11,cursor:"pointer",fontWeight:500}}>
-            {s}
-          </span>
+            style={{background:BG2,border:`1px solid ${BORDER}`,color:MUTED,padding:"4px 10px",borderRadius:100,fontSize:11,cursor:"pointer",fontWeight:500}}>{s}</span>
         ))}
       </div>
     </div>
   );
 }
 
-// ── PROGRESS BAR — defined outside to avoid render error ──
+// Progress bar — defined OUTSIDE to prevent render error
 const Prog=({step})=>(
   <div style={{display:"flex",gap:8,marginBottom:28}}>
     {[1,2,3].map(i=>(
@@ -128,22 +115,24 @@ export default function Register(){
     try{
       const cred=await createUserWithEmailAndPassword(auth,f.email,f.password);
       await updateProfile(cred.user,{displayName:f.name});
-      let resumeURL="";
+      let resumeURL="",resumeName="";
       if(resumeFile){
         const r=ref(storage,`resumes/${cred.user.uid}/${resumeFile.name}`);
         await uploadBytes(r,resumeFile);
         resumeURL=await getDownloadURL(r);
+        resumeName=resumeFile.name;
       }
       await setDoc(doc(db,"users",cred.user.uid),{
         name:f.name,email:f.email,phone:f.phone,pan:f.pan,city:f.city,
         experience:f.exp,currentCompany:f.company,currentTitle:f.title,
         currentCTC:f.cCTC,expectedCTC:f.eCTC,noticePeriod:f.notice,
         primarySkill:f.pSkill,otherSkills:skills,jobType:f.jobType,
-        resumeURL,plan:"free",status:"Active",registeredAt:serverTimestamp()
+        resumeURL,resumeName,plan:"free",status:"Active",
+        registeredAt:serverTimestamp()
       });
       nav("/dashboard");
     }catch(e){
-      setError(e.message.includes("email-already-in-use")?"Email already registered. Please login.":"Registration failed. Try again.");
+      setError(e.message?.includes("email-already-in-use")?"Email already registered. Please login.":"Registration failed. Please try again.");
     }finally{setLoading(false);}
   };
 
@@ -154,12 +143,10 @@ export default function Register(){
       <NavBar onBack={step>1?()=>{setStep(s=>s-1);setError("");}:()=>nav("/")} right={<span style={{color:MUTED,fontSize:12,fontWeight:600}}>Step {step}/3</span>}/>
       <div style={{maxWidth:520,margin:"32px auto",padding:"0 20px"}}>
         <Prog step={step}/>
-        {/* Step label */}
         <div style={{marginBottom:20}}>
           <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:PRIMARY,marginBottom:4}}>{stepLabels[step-1]}</h2>
           <p style={{color:MUTED,fontSize:14}}>{step===1?"One account to find jobs and post referrals":step===2?"Helps us match you with the right referrals":"Add your skills and upload your resume"}</p>
         </div>
-
         <div style={{background:WHITE,border:`1px solid ${BORDER}`,borderRadius:20,padding:28,boxShadow:"0 4px 24px rgba(0,0,0,0.06)"}}>
           {error&&<div style={{background:"#FEF2F2",border:"1px solid #FECACA",borderRadius:10,padding:"10px 14px",color:"#DC2626",fontSize:13,marginBottom:20,lineHeight:1.5}}>{error}</div>}
 
@@ -197,8 +184,8 @@ export default function Register(){
               <Inp label="Total Experience *" placeholder="e.g. 4 years" value={f.exp} onChange={e=>set("exp",e.target.value)}/>
               <Inp label="Current Company" placeholder="Cognizant, TCS, Amazon…" value={f.company} onChange={e=>set("company",e.target.value)}/>
               <Inp label="Current Job Title *" placeholder="Senior Java Developer" value={f.title} onChange={e=>set("title",e.target.value)}/>
-              <Inp label="Current CTC (LPA)" placeholder="8" value={f.cCTC} onChange={e=>set("cCTC",e.target.value)}/>
-              <Inp label="Expected CTC (LPA)" placeholder="14" value={f.eCTC} onChange={e=>set("eCTC",e.target.value)}/>
+              <Inp label="Current CTC (LPA)" placeholder="e.g. 8" value={f.cCTC} onChange={e=>set("cCTC",e.target.value)}/>
+              <Inp label="Expected CTC (LPA)" placeholder="e.g. 14" value={f.eCTC} onChange={e=>set("eCTC",e.target.value)}/>
               <Sel label="Notice Period" options={["Immediate","15 Days","30 Days","60 Days","90 Days"]} value={f.notice} onChange={e=>set("notice",e.target.value)}/>
               <Sel label="Preferred Job Type" options={["Full Time","Remote","Hybrid","Contract"]} value={f.jobType} onChange={e=>set("jobType",e.target.value)}/>
             </div>
@@ -219,11 +206,8 @@ export default function Register(){
                   <input type="file" accept=".pdf" onChange={e=>setResumeFile(e.target.files[0])} style={{display:"none"}}/>
                   <div style={{fontSize:28,marginBottom:8}}>{resumeFile?"✅":"📄"}</div>
                   <div style={{color:resumeFile?"#15803D":TEXT,fontSize:14,fontWeight:600,marginBottom:4}}>{resumeFile?resumeFile.name:"Click to upload Resume"}</div>
-                  <div style={{color:MUTED,fontSize:12}}>PDF only • Max 5MB</div>
+                  <div style={{color:MUTED,fontSize:12}}>PDF only • Max 5MB (optional)</div>
                 </label>
-              </div>
-              <div style={{background:GREENBG,border:"1px solid #BBF7D0",borderRadius:10,padding:"12px 16px",fontSize:13,color:"#15803D",lineHeight:1.7}}>
-                ✦ First 2 applications & 1 referral post free. Upgrade to ₹799 for unlimited.
               </div>
             </div>
             <button onClick={handleSubmit} disabled={loading}
